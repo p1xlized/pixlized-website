@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style="background: transparent;">
+  <path d="M30 35 H70 L80 50 L70 65 H30 L20 50 Z" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/>
+
+
+
+
+  <path d="M 25 15 H 15 V 25 M 75 15 H 85 V 25 M 25 85 H 15 V 75 M 75 85 H 85 V 75" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter" opacity="0.7"/>
+
+  <path d="M 40 22 H 60 M 45 15 H 55 M 50 5 V 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+  <path d="M 40 78 H 60 M 45 85 H 55 M 50 95 V 85" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+
+  <path d="M 12 45 L 5 50 L 12 55" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M 88 45 L 95 50 L 88 55" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
