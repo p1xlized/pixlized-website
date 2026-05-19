@@ -400,7 +400,7 @@ export const Navbar = () => {
                     key={item.name}
                     onClick={() => navigate({ to: item.path as any })}
                     className={cn(
-                      "text-[10px] font-black tracking-[0.4em] transition-all",
+                      "text-[10px] font-black tracking-[0.4em] transition-all px-3 py-2 rounded-sm",
                       location.pathname === item.path
                         ? "text-primary drop-shadow-[0_0_8px_var(--primary)]"
                         : "text-primary/60 hover:text-primary/80",
@@ -414,7 +414,7 @@ export const Navbar = () => {
               <div className="flex items-center gap-6 md:gap-12">
                 <button
                   onClick={toggleTheme}
-                  className="relative flex h-8 items-center px-3 transition-opacity select-none active:scale-95"
+                  className="relative flex h-12 items-center px-4 transition-opacity select-none active:scale-95 rounded-sm"
                 >
                   <div className="relative h-2.5 w-14 rounded-full border border-primary/20 bg-primary/5">
                     <motion.div
@@ -447,7 +447,7 @@ export const Navbar = () => {
 
                 <button
                   onClick={() => setIsMobileOpen(true)}
-                  className="flex flex-col items-end gap-1.5 p-2 text-primary md:hidden"
+                  className="flex flex-col items-end gap-1.5 p-3 text-primary md:hidden"
                 >
                   <div className="h-px w-6 bg-primary shadow-[0_0_8px_var(--primary)]" />
                   <div className="h-px w-4 bg-primary/40" />

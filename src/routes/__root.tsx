@@ -6,6 +6,7 @@ import appCss from "../styles.css?url";
 
 import { CustomCursor } from "@/components/Coursor";
 import Navbar from "@/components/Navbar/Navbar";
+import { Footer } from "@/components/Footer";
 
 export const Route = createRootRoute({
   head: () => ({
@@ -30,6 +31,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       <body className="md:cursor-none">
         <CustomCursor />
         <Navbar />
+        <Footer />
         {children}
 
         {/*<TanStackDevtools

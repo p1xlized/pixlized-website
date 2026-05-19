@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useCallback, useMemo } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import {
   AnimatePresence,
@@ -9,7 +9,6 @@ import {
   useMotionValueEvent,
 } from "framer-motion";
 import { ArrowDown } from "@phosphor-icons/react";
-import { useStore } from "@tanstack/react-store";
 
 // Internal Libs
 import { useBrowserTab } from "@/components/BrowserTab";
@@ -17,29 +16,12 @@ import { useBrowserTab } from "@/components/BrowserTab";
 // Components
 import Profile from "@/components/Profile/Profile";
 import { SystemLoader } from "@/components/Loaders/Loader";
-
-import TestimonialsNode from "@/components/Profile/Testimonials";
 import SpaceParallax from "@/components/BackgroundEffects/SpaceParallax";
-import { PORTFOLIO_DATA } from "@/lib/data";
 import ContactSection from "@/components/Profile/ContactMe";
 
 // --- 1. STATIC DECORATIONS (Rendered Once) ---
 const GaugeDecoration = React.memo(() => (
   <>
-    {/* Left Side: Ruler Ticks & Hex Readouts */}
-    {/*<div className="absolute right-4 flex-col justify-between h-72 py-0 opacity-30 pointer-events-none ">
-      {[...Array(16)].map((_, i) => (
-        <div key={i} className="flex items-center justify-end gap-1.5 w-8">
-          <span className="text-[5px] font-mono">
-            {i % 5 === 0 ? `0x0${i.toString(16).toUpperCase()}` : ""}
-          </span>
-          <div
-            className={`h-[1px] bg-primary ${i % 5 === 0 ? "w-3" : "w-1"}`}
-          />
-        </div>
-      ))}
-    </div>*/}
-
     {/* Right Side: Vertical Labeling */}
     <div className="absolute -right-4 flex flex-col items-center h-72 justify-center opacity-20 pointer-events-none">
       <div className="text-[6px] tracking-[0.6em] [writing-mode:vertical-rl] font-mono font-black rotate-180">
@@ -91,8 +73,8 @@ const ScrollGauge = React.memo(({ active }: { active: string }) => (
           <motion.div
             initial={false}
             animate={{
-              scaleY:
-                active === "PROFILE" ? 0 : active === "TESTIMONIALS" ? 0.5 : 1,
+              // With only PROFILE and CONTACT pages, the indicator is either collapsed (PROFILE) or full (CONTACT)
+              scaleY: active === "PROFILE" ? 0 : 1,
               opacity: [0.6, 1, 0.8],
             }}
             transition={{
@@ -114,21 +96,44 @@ const ScrollGauge = React.memo(({ active }: { active: string }) => (
 
 // --- 3. MAIN ROUTE & COMPONENT ---
 export const Route = createFileRoute("/")({ component: App });
-const SECTIONS = ["PROFILE", "TESTIMONIALS", "CONTACT"];
+const SECTIONS = ["PROFILE", "CONTACT"];
 
 function App() {
   const [loading, setLoading] = useState(true);
   const [activeSection, setActiveSection] = useState("PROFILE");
   const [container, setContainer] = useState<HTMLDivElement | null>(null);
-
-  // System Store Subscription
-  // System Store Subscription
-  const feedbacks = PORTFOLIO_DATA.testimonials;
+  const [isInactive, setIsInactive] = useState(false);
 
   // Scroll Engine
   const { scrollYProgress } = useScroll({
     container: container ? { current: container } : undefined,
   });
+
+  // Inactivity Detection (30 minutes = 1800000 ms)
+  useEffect(() => {
+    let inactivityTimer: NodeJS.Timeout;
+    const resetInactivityTimer = () => {
+      setIsInactive(false);
+      clearTimeout(inactivityTimer);
+      inactivityTimer = setTimeout(() => setIsInactive(true), 20000);
+    };
+
+    // Listen for user activity
+    const events = ["mousedown", "keydown", "scroll", "touchstart", "click"];
+    events.forEach((event) => {
+      window.addEventListener(event, resetInactivityTimer);
+    });
+
+    // Initial timer
+    inactivityTimer = setTimeout(() => setIsInactive(true), 20000);
+
+    return () => {
+      clearTimeout(inactivityTimer);
+      events.forEach((event) => {
+        window.removeEventListener(event, resetInactivityTimer);
+      });
+    };
+  }, []);
 
   // Update active section label without re-rendering everything
   useMotionValueEvent(scrollYProgress, "change", (latest) => {
@@ -224,7 +229,7 @@ function App() {
                   </div>
                   <TimeDisplay />
                   <div className="text-[5px] opacity-30 mt-1 tracking-tighter">
-                    OS_VERSION::BUN_ELYSIA_v3.2
+                    OS_VERSION::pxlOS_v3.2
                   </div>
                 </div>
               </div>
@@ -244,29 +249,28 @@ function App() {
                 <Profile />
               </section>
 
-              <section className="h-screen w-full snap-start flex items-center justify-center p-4">
-                {/* Lazy Mount: Only render testimonials when on or near the page */}
-                {activeSection !== "CONTACT" && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                  >
-                    <TestimonialsNode data={feedbacks} />
-                  </motion.div>
-                )}
-              </section>
-
               <section className="h-screen w-full snap-start flex items-center justify-center p-4 overflow-hidden">
                 <ContactSection />
               </section>
             </div>
 
-            {/* HUD: FOOTER COMMAND MODULE */}
-            <footer className="hidden md:block fixed bottom-6 md:bottom-10 inset-x-0 md:inset-x-auto md:right-10 z-50 flex flex-col items-center md:items-end pointer-events-none select-none px-6">
-              <div className="group relative flex flex-col items-center md:items-end pointer-events-auto">
-                {/* 1. COMMAND TOOLTIP (Right-Aligned Legend) */}
-                <div className="absolute bottom-full mb-5 flex flex-col items-center md:items-end opacity-0 group-hover:opacity-100 transition-all duration-500 translate-y-2 group-hover:translate-y-0">
-                  <div className="relative p-2 bg-background/95 backdrop-blur-2xl border border-primary/20 flex flex-col gap-2 shadow-[0_0_30px_rgba(var(--primary-rgb),0.15)] min-w-[120px]">
+            {/* HUD: FOOTER COMMAND MODULE (centered & prominent) */}
+            <footer className="hidden md:block fixed bottom-6 left-1/2 z-50 -translate-x-1/2 flex flex-col items-center pointer-events-none select-none px-6">
+              <div className="group relative flex flex-col items-center pointer-events-auto">
+                {/* 1. COMMAND TOOLTIP (Centered Legend) */}
+                <motion.div
+                  animate={{
+                    opacity: isInactive ? 1 : 0,
+                    x: isInactive ? 0 : -8,
+                  }}
+                  transition={{ duration: 0.4 }}
+                  className="absolute right-full mr-6 top-1/2 -translate-y-1/2 flex flex-col items-end"
+                  style={{
+                    opacity: isInactive ? 1 : 0,
+                    pointerEvents: isInactive ? "auto" : "none",
+                  }}
+                >
+                  <div className="relative p-2 bg-background/95 backdrop-blur-2xl border border-primary/20 flex flex-col gap-2 shadow-[0_0_30px_rgba(var(--primary-rgb),0.15)] min-w-[140px]">
                     <div className="flex items-center justify-between gap-4">
                       <span className="text-[5px] tracking-[0.3em] font-black opacity-30 uppercase">
                         Manual_Override
@@ -294,58 +298,71 @@ function App() {
                       </div>
                     </div>
 
-                    {/* Right-aligned connecting stem */}
-                    <div className="absolute top-full right-4 w-[1px] h-4 bg-primary/20" />
+                    {/* Connecting line to button */}
+                    <div className="absolute left-full top-1/2 -translate-y-1/2 w-6 h-[1px] bg-primary/20" />
                   </div>
-                </div>
+                </motion.div>
 
-                {/* 2. THE MECHANICAL BUTTON HOUSING */}
-                <div className="relative p-1 border border-primary/10 rounded-sm">
-                  {/* Outer Brackets (Static) */}
-                  <div className="absolute -top-1 -left-1 size-2 border-t border-l border-primary/40" />
-                  <div className="absolute -bottom-1 -right-1 size-2 border-b border-r border-primary/40" />
+                {/* 2. THE PROMINENT CENTER BUTTON */}
+                <div className="relative p-1 rounded-sm">
+                  {/* "CLICK ME" label - appears on right when inactive */}
+                  <motion.div
+                    animate={{
+                      opacity: isInactive ? 1 : 0,
+                      x: isInactive ? 0 : 8,
+                    }}
+                    transition={{ duration: 0.4 }}
+                    className="absolute left-full ml-6 top-1/2 -translate-y-1/2 pointer-events-none whitespace-nowrap"
+                  >
+                    <span className="text-[8px] font-black tracking-[0.3em] text-primary/60 uppercase animate-pulse">
+                      Click Me
+                    </span>
+                  </motion.div>
 
                   <button
                     onClick={() =>
-                      smoothScrollTo((SECTIONS.indexOf(activeSection) + 1) % 3)
+                      smoothScrollTo(
+                        (SECTIONS.indexOf(activeSection) + 1) % SECTIONS.length,
+                      )
                     }
-                    className="relative size-10 flex items-center justify-center bg-background/60 backdrop-blur-md border border-primary/40 hover:border-primary transition-all duration-300 group/btn overflow-hidden"
+                    className="relative size-12 flex items-center justify-center bg-transparent text-primary backdrop-blur-sm border-2 border-primary/60 hover:border-primary hover:scale-105 transform-gpu transition-all duration-300 overflow-hidden rounded-full shadow-[0_0_12px_rgba(var(--primary-rgb),0.12)] hover:shadow-[0_0_20px_rgba(var(--primary-rgb),0.2)]"
+                    aria-label="Next section"
                   >
-                    {/* Animated Scanning Line */}
+                    {/* Subtle scanning line */}
                     <motion.div
                       animate={{ top: ["-10%", "110%"] }}
                       transition={{
-                        duration: 2,
+                        duration: 1.6,
                         repeat: Infinity,
                         ease: "linear",
                       }}
-                      className="absolute inset-x-0 h-[1px] bg-primary/20 z-0"
+                      className="absolute inset-x-0 h-[1px] bg-primary/15 z-0"
                     />
 
-                    {/* Hover Invert Effect */}
-                    <div className="absolute inset-0 bg-primary scale-x-0 group-hover/btn:scale-x-100 transition-transform duration-500 origin-left" />
+                    {/* Accent overlay on hover */}
+                    <div className="absolute inset-0 bg-gradient-to-b from-primary/6 to-transparent opacity-0 group-hover:opacity-15 transition-all duration-300 rounded-full" />
 
                     <motion.div
                       animate={{
                         rotate: activeSection === "CONTACT" ? 180 : 0,
                       }}
-                      className="relative z-10 group-hover/btn:text-background transition-colors duration-300"
+                      className="relative z-10 text-primary transition-colors duration-300 group-hover:text-primary"
                     >
-                      <ArrowDown size={16} />
+                      <ArrowDown size={20} weight="bold" />
                     </motion.div>
                   </button>
                 </div>
 
                 {/* 3. DYNAMIC DATA STRIP */}
-                <div className="mt-3 flex flex-col items-center md:items-end gap-1">
+                <div className="mt-3 flex flex-col items-center gap-1">
                   <div className="flex items-center gap-2">
-                    <span className="text-[5px] tracking-[0.5em] font-black uppercase text-primary/80">
+                    <span className="text-[6px] tracking-[0.5em] font-black uppercase text-primary/80">
                       {activeSection === "CONTACT"
                         ? "EXEC::REBOOT"
                         : "EXEC::NEXT_MOD"}
                     </span>
                     <div className="flex gap-0.5">
-                      {[...Array(3)].map((_, i) => (
+                      {[...Array(SECTIONS.length)].map((_, i) => (
                         <div
                           key={i}
                           className={`size-0.5 rounded-full ${i === SECTIONS.indexOf(activeSection) ? "bg-primary" : "bg-primary/20"}`}
@@ -354,7 +371,6 @@ function App() {
                     </div>
                   </div>
 
-                  {/* Bitrate decoration */}
                   <div className="h-[1px] w-20 bg-gradient-to-l from-primary/40 to-transparent" />
                   <span className="text-[4px] font-mono opacity-20 uppercase">
                     Auth_Token::0xA1X_VALID

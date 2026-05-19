@@ -62,9 +62,11 @@ export default function ProjectsPage() {
           .includes(searchQuery.toLowerCase());
         return matchesTag && matchesType && matchesSearch;
       })
-      .sort((a: any, b: any) =>
-        sortOrder === "ASC" ? a.id - b.id : b.id - a.id,
-      );
+      .sort((a: any, b: any) => {
+        const dateA = new Date(a.releasedAt).getTime();
+        const dateB = new Date(b.releasedAt).getTime();
+        return sortOrder === "ASC" ? dateA - dateB : dateB - dateA;
+      });
   }, [filter, workType, searchQuery, sortOrder, projects]);
 
   // ✅ PAGINATION & VIEW LOGIC

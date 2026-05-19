@@ -1,0 +1,38 @@
+# Dependencies
+node_modules/
+.bun/
+bun.lockb
+
+# Build outputs
+dist/
+.output/
+.vinxi/
+.vercel/
+
+# IDE & OS
+.vscode/
+.idea/
+.DS_Store
+*.log
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Generated Code
+routeTree.gen.ts
+
+# Nix & devenv
+.devenv/
+.direnv/
+devenv.local.nix
+.pre-commit-config.yaml
+result
+result-*
+
+# Drizzle & SQLite
+packages/db/*.db
+packages/db/*.db-journal
+packages/db/*.db-shm
+packages/db/*.db-wal

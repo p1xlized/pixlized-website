@@ -41,7 +41,8 @@ export interface Project {
   title: string;
   tech: string;
   role: string;
-  date: string;
+  date: string; // Display format: "NOV_2024"
+  releasedAt: string; // ISO format: "2024-11-15" for sorting
   tag: "MOBILE" | "WEB" | "GAME";
   description: string;
   cover: string;
@@ -221,6 +222,7 @@ export const PORTFOLIO_DATA: PortfolioData = {
       tech: "FLUTTER / SUPABASE / OPENAI",
       role: "Developer | AI Integration",
       date: "NOV_2024",
+      releasedAt: "2024-11-15",
       tag: "MOBILE",
       description:
         "Led a 5-person team in a 24-hour hackathon to build an AI fitness MVP, implementing real-time adaptable workout logic via OpenAI and architecting a high-fidelity, gamified progression system.",
@@ -254,6 +256,7 @@ export const PORTFOLIO_DATA: PortfolioData = {
       tech: "REACT / THREE.JS / SUPABASE",
       role: "Solo Developer",
       date: "FEB_2025",
+      releasedAt: "2025-02-10",
       tag: "WEB",
       description:
         "High-performance 3D editor featuring a custom streaming pipeline that achieves sub-one-second load times. Optimized rendering through GLTF instancing and asset management.",
@@ -279,6 +282,7 @@ export const PORTFOLIO_DATA: PortfolioData = {
       role: "GAME_DEVELOPER",
       tag: "GAME",
       date: "FEB_2025",
+      releasedAt: "2025-02-20",
       description:
         "2D exploration game from scratch featuring dynamic environment logic and custom modular architecture managing 300+ concurrent objects.",
       cover: "/assets/projects/kira1.jpg",
@@ -296,6 +300,7 @@ export const PORTFOLIO_DATA: PortfolioData = {
       tech: "Java / FXGL / JavaFX",
       role: "GAME_DEVELOPER",
       date: "MARCH_2026",
+      releasedAt: "2026-03-05",
       tag: "GAME",
       description:
         "A cozy, procedurally generated farming simulator built to explore the boundaries of JavaFX game development. Escape to a unique island to plant, grow, and harvest your way to a tranquil life.",
@@ -322,6 +327,7 @@ export const PORTFOLIO_DATA: PortfolioData = {
       tech: "ElysiaJS / Unity / OLLAMA",
       role: "GAME_DEVELOPER & AI integration",
       date: "NOVEMBER_2025",
+      releasedAt: "2025-11-15",
       tag: "GAME",
       description:
         "A cozy, procedurally generated farming simulator built to explore the boundaries of JavaFX game development. Escape to a unique island to plant, grow, and harvest your way to a tranquil life.",
@@ -341,10 +347,38 @@ export const PORTFOLIO_DATA: PortfolioData = {
     },
     {
       id: 6,
+      title: "Aalto Defense & Junction Hackathon",
+      tech: "OpenCV / Python / FastAPI / Gemini API",
+      role: "Developer & AI integration",
+      date: "MAY_2026",
+      releasedAt: "2026-05-10",
+      tag: "WEB",
+      description:
+        "An automated regional intelligence engine designed for autonomous drone operations. By ingesting macro weather conditions, topographic elevation profiles, and object-detection telemetry, the system chains specialized LLM analytical prompts to generate real-time military-grade threat assessments. It synthesizes complex geospatial layers into a single, cohesive operational directive, providing mission commanders with instantaneous overall risk scores and actionable flight recommendations across multiple strategic sectors.",
+      cover: "/assets/projects/defense.png",
+      isVideo: true,
+      videoUrl: "https://www.youtube.com/embed/oK_Lz4J4iMU?si=9BQd1aX_3t-M2ePT",
+      githubUrl: "https://github.com/romanButkus/TactisHackathon",
+      features: [
+        "Real-time object-detection simulation",
+        "Automated multi-sector threat level matrix",
+        "Geospatial data analysis",
+      ],
+      metrics: [
+        { label: "AI_efficiency", value: 100 },
+        { label: "Data>Population_Time", value: 20 },
+      ],
+      isFeatured: true,
+      isPersonal: true,
+      stack: ["Python", "FastAPI", "OpenCV", "Gemini API"],
+    },
+    {
+      id: 7,
       title: "City Life",
       tech: "React Native / Supabase / City of Montreal API",
       role: "Solo Developer",
       date: "FEB_2023",
+      releasedAt: "2023-02-15",
       tag: "MOBILE",
       description:
         "High-performance 3D editor featuring a custom streaming pipeline that achieves sub-one-second load times. Optimized rendering through GLTF instancing and asset management.",

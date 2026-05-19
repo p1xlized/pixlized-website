@@ -1,21 +1,22 @@
-"use client"
+"use client";
 
-import React, { useEffect, useState, ElementType } from "react"
-import { AnimatePresence, motion } from "framer-motion"
+import React, { useEffect, useState, ElementType } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 
 // --- TYPES ---
 
 interface ActionButtonProps {
-  label: string
-  icon: ElementType
-  sublabel: string
-  onClick: () => void
-  variant?: "blog" | "music"
+  label: string;
+  icon: ElementType;
+  sublabel: string;
+  onClick: () => void;
+  variant?: "blog" | "music";
+  toolkit?: string[];
 }
 
 interface TypedTextProps {
-  text: string
-  delay?: number
+  text: string;
+  delay?: number;
 }
 
 // --- ANIMATION COMPONENTS ---
@@ -30,8 +31,24 @@ const ArchiveSchematic: React.FC = () => (
       {/* Structural Grid */}
       {[...Array(5)].map((_, i) => (
         <React.Fragment key={i}>
-          <line x1={20 * i} y1="0" x2={20 * i} y2="100" stroke="currentColor" strokeWidth="0.05" opacity="0.1" />
-          <line x1="0" y1={20 * i} x2="100" y2={20 * i} stroke="currentColor" strokeWidth="0.05" opacity="0.1" />
+          <line
+            x1={20 * i}
+            y1="0"
+            x2={20 * i}
+            y2="100"
+            stroke="currentColor"
+            strokeWidth="0.05"
+            opacity="0.1"
+          />
+          <line
+            x1="0"
+            y1={20 * i}
+            x2="100"
+            y2={20 * i}
+            stroke="currentColor"
+            strokeWidth="0.05"
+            opacity="0.1"
+          />
         </React.Fragment>
       ))}
       {/* Pulsing Nodes */}
@@ -52,7 +69,11 @@ const ArchiveSchematic: React.FC = () => (
     {/* Textual Decoration: Bit Streams */}
     <div className="absolute left-2 top-0 flex flex-col font-mono text-[4px] leading-tight text-primary/20 uppercase">
       {["0x00FF1", "MEM_ALLOC", "DB_SYNC", "PUSH_DATA"].map((t, i) => (
-        <motion.span key={i} animate={{ x: [-2, 2, -2] }} transition={{ duration: 4, delay: i, repeat: Infinity }}>
+        <motion.span
+          key={i}
+          animate={{ x: [-2, 2, -2] }}
+          transition={{ duration: 4, delay: i, repeat: Infinity }}
+        >
           {t}
         </motion.span>
       ))}
@@ -62,7 +83,7 @@ const ArchiveSchematic: React.FC = () => (
       <span className="text-primary/40">v.0.4.2_stable</span>
     </div>
   </motion.div>
-)
+);
 
 /**
  * SignalSchematic: Music variant.
@@ -73,9 +94,26 @@ const SignalSchematic: React.FC = () => (
     <svg viewBox="0 0 100 100" className="h-full w-full text-primary">
       {/* Frequency Range Markers */}
       {[20, 40, 60, 80].map((x) => (
-        <line key={x} x1={x} y1="45" x2={x} y2="55" stroke="currentColor" strokeWidth="0.1" opacity="0.3" />
+        <line
+          key={x}
+          x1={x}
+          y1="45"
+          x2={x}
+          y2="55"
+          stroke="currentColor"
+          strokeWidth="0.1"
+          opacity="0.3"
+        />
       ))}
-      <line x1="10" y1="50" x2="90" y2="50" stroke="currentColor" strokeWidth="0.05" opacity="0.2" />
+      <line
+        x1="10"
+        y1="50"
+        x2="90"
+        y2="50"
+        stroke="currentColor"
+        strokeWidth="0.05"
+        opacity="0.2"
+      />
 
       {/* The Waveform */}
       <motion.path
@@ -88,7 +126,16 @@ const SignalSchematic: React.FC = () => (
       />
 
       {/* Radial Signal Radar */}
-      <circle cx="50" cy="50" r="40" fill="none" stroke="currentColor" strokeWidth="0.05" strokeDasharray="2 2" className="opacity-10" />
+      <circle
+        cx="50"
+        cy="50"
+        r="40"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="0.05"
+        strokeDasharray="2 2"
+        className="opacity-10"
+      />
     </svg>
 
     {/* Textual Decoration: Signal Stats */}
@@ -103,22 +150,22 @@ const SignalSchematic: React.FC = () => (
       </div>
     </div>
   </motion.div>
-)
+);
 
 // --- COMPONENTS ---
 
 export const TypedText: React.FC<TypedTextProps> = ({ text, delay = 0.03 }) => {
-  const [displayedText, setDisplayedText] = useState("")
+  const [displayedText, setDisplayedText] = useState("");
 
   useEffect(() => {
-    let i = 0
+    let i = 0;
     const timer = setInterval(() => {
-      setDisplayedText(text.slice(0, i))
-      i++
-      if (i > text.length) clearInterval(timer)
-    }, delay * 1000)
-    return () => clearInterval(timer)
-  }, [text, delay])
+      setDisplayedText(text.slice(0, i));
+      i++;
+      if (i > text.length) clearInterval(timer);
+    }, delay * 1000);
+    return () => clearInterval(timer);
+  }, [text, delay]);
 
   return (
     <span className="font-mono">
@@ -126,28 +173,29 @@ export const TypedText: React.FC<TypedTextProps> = ({ text, delay = 0.03 }) => {
       <motion.span
         animate={{ opacity: [1, 0] }}
         transition={{
-            duration: 0.8,
-            repeat: Infinity,
+          duration: 0.8,
+          repeat: Infinity,
 
-            ease: "linear"
-          }}
+          ease: "linear",
+        }}
         className="ml-1 inline-block h-3 w-1.5 bg-primary align-middle"
       />
     </span>
-  )
-}
+  );
+};
 
 export const ActionButton: React.FC<ActionButtonProps> = ({
   label,
   icon: Icon,
   sublabel,
   onClick,
-  variant = "blog"
+  variant = "blog",
+  toolkit = [],
 }) => {
   return (
     <button
       onClick={onClick}
-      className="group relative flex flex-1 flex-col items-center justify-center overflow-hidden border border-primary/20 bg-card/40 py-12 transition-all duration-500 hover:border-primary hover:bg-primary/[0.04]"
+      className="group relative flex flex-1 flex-col items-center justify-center overflow-hidden border border-primary/20 bg-card/40 py-6 transition-all duration-500 hover:border-primary hover:bg-primary/[0.04]"
     >
       {/* Background Schematic Layer */}
       <div className="absolute inset-0 -z-10 scale-110 opacity-0 transition-all duration-700 group-hover:scale-100 group-hover:opacity-100">
@@ -178,8 +226,8 @@ export const ActionButton: React.FC<ActionButtonProps> = ({
         </div>
       </div>
 
-      {/* Bottom Visualizer / Data Activity Animation */}
-      <div className="absolute bottom-0 left-0 flex h-1.5 w-full items-end justify-center gap-[2px] px-2 opacity-0 transition-opacity duration-500 group-hover:opacity-100">
+      {/* Bottom Visualizer / Data Activity Animation (moved above toolkit) */}
+      <div className="absolute bottom-8 left-0 flex h-1.5 w-full items-end justify-center gap-[2px] px-2 opacity-0 transition-opacity duration-500 group-hover:opacity-100">
         {[...Array(24)].map((_, i) => (
           <motion.div
             key={i}
@@ -198,17 +246,34 @@ export const ActionButton: React.FC<ActionButtonProps> = ({
         ))}
       </div>
 
+      {/* Toolkit strip (full-width chips) */}
+      {toolkit.length > 0 && (
+        <div className="absolute bottom-0 left-0 w-full border-t border-primary/10 bg-card/30 px-3 py-2 flex gap-2 items-center overflow-x-auto">
+          {toolkit.map((t, i) => (
+            <div
+              key={i}
+              className="flex-shrink-0 rounded px-2 py-0.5 text-[10px] bg-primary/10 text-primary/90 font-mono uppercase"
+            >
+              {t}
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Metadata Corners */}
+
       <div className="absolute top-3 left-3 flex flex-col font-mono text-[6px] text-primary/30 uppercase tracking-[0.2em]">
         <span>{variant === "blog" ? "DAT_LOAD_OK" : "SIG_RECV_ON"}</span>
-        <span className="text-[5px] opacity-50">{variant === "blog" ? "UUID: 882A" : "STEREO_UPLINK"}</span>
+        <span className="text-[5px] opacity-50">
+          {variant === "blog" ? "UUID: 882A" : "STEREO_UPLINK"}
+        </span>
       </div>
 
       {/* Decorative Corner Accents */}
       <div className="absolute top-0 right-0 size-2 border-t border-r border-primary/20 transition-colors group-hover:border-primary" />
       <div className="absolute bottom-0 left-0 size-2 border-b border-l border-primary/20 transition-colors group-hover:border-primary" />
     </button>
-  )
-}
+  );
+};
 
-export default ActionButton
+export default ActionButton;
