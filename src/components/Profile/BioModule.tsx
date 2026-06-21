@@ -166,9 +166,9 @@ const BioModule = () => {
       </div>
 
       {/* --- TERMINAL WORKSPACE UI CONTAINER --- */}
-      <div className="group relative flex-[1.4] overflow-hidden border border-primary/20 bg-background/40 p-3 transition-all duration-500 hover:border-primary hover:bg-primary/5 flex flex-col min-h-56 h-56 select-none">
+      <div className="group relative flex min-h-64 flex-[1.4] flex-col overflow-hidden border border-primary/20 bg-background/35 p-4 shadow-[0_0_24px_rgba(var(--primary-rgb),0.06)] transition-all duration-500 hover:border-primary/40 hover:bg-primary/5 select-none">
         {/* --- TERMINAL HEADER --- */}
-        <div className="flex items-center gap-2 border-b border-primary/20 pb-1.5 mb-2 shrink-0">
+        <div className="mb-3 flex items-center gap-2 border-b border-primary/20 pb-2 shrink-0">
           <div className="flex gap-1">
             <div className="size-1.5 rounded-full bg-yellow-500/60" />
             <div className="size-1.5 rounded-full bg-orange-500/60" />
@@ -182,7 +182,7 @@ const BioModule = () => {
         {/* --- TERMINAL OUTPUT --- */}
         <div
           ref={terminalRef}
-          className="flex-1 overflow-y-auto text-[10px] font-mono text-primary/80 space-y-1 min-h-0 custom-scrollbar"
+          className="flex-1 overflow-y-auto space-y-1 min-h-0 text-[10px] font-mono text-primary/80 custom-scrollbar"
         >
           {history.map((entry, i) => (
             <motion.div
@@ -203,7 +203,7 @@ const BioModule = () => {
         </div>
 
         {/* --- TERMINAL INPUT --- */}
-        <div className="flex items-center gap-2 border-t border-primary/20 pt-1.5 mt-2 shrink-0">
+        <div className="mt-3 flex items-center gap-2 border-t border-primary/20 pt-2 shrink-0">
           <span className="text-primary font-mono text-[10px] font-bold shrink-0 animate-pulse">
             $
           </span>

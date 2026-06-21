@@ -4,7 +4,6 @@ import { TanStackDevtools } from "@tanstack/react-devtools";
 
 import appCss from "../styles.css?url";
 
-import { CustomCursor } from "@/components/Coursor";
 import Navbar from "@/components/Navbar/Navbar";
 import { Footer } from "@/components/Footer";
 
@@ -27,9 +26,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       <head>
         <HeadContent />
       </head>
-      {/* Added cursor-none here to hide the system pointer everywhere */}
-      <body className="md:cursor-none">
-        <CustomCursor />
+      <body>
         <Navbar />
         <Footer />
         {children}

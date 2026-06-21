@@ -13,13 +13,12 @@ import ToolkitModule from "../ToolkitModule";
 const DesktopView = React.memo(() => {
   const navigate = useNavigate();
   return (
-    <div className="relative mt-4 flex h-full w-full max-w-5xl flex-col gap-3 p-8">
+    <div className="relative mt-4 flex h-full w-full max-w-6xl flex-col gap-4 px-6 py-8 lg:px-8">
       <HeaderSection />
-      {/* Changed h-96 to min-h-[22rem] to avoid forcing a stretched vertical size */}
-      <div className="mt-4 grid min-h-[22rem] grid-cols-12 gap-3">
-        <div className="col-span-12 flex flex-col gap-3 md:col-span-5">
+      <div className="mt-1 grid min-h-[24rem] grid-cols-12 gap-4">
+        <div className="col-span-12 flex flex-col gap-4 md:col-span-5">
           <BioModule />
-          <div className="flex flex-1 gap-4">
+          <div className="grid grid-cols-2 gap-4">
             <ActionButton
               label="Blog"
               icon={Archive}

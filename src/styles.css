@@ -148,22 +148,7 @@
 }
 
 /* --- 4. TUI CURSOR LOGIC --- */
-@media (pointer: fine) {
-  body,
-  * {
-    cursor: none !important;
-  }
-}
-
-@media (pointer: coarse) {
-  body,
-  * {
-    cursor: auto !important;
-  }
-  .custom-cursor-element {
-    display: none !important;
-  }
-}
+/* Removed custom cursor overrides so the browser default cursor is used. */
 
 /* --- 5. TUI UTILITIES --- */
 .text-metadata {

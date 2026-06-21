@@ -6,7 +6,7 @@ import CornerMarkers from "./CornerMarkers";
 import TitleTicker from "./TitleTicker";
 
 const HeaderSection = React.memo(() => (
-  <header className="relative flex w-full flex-row items-center gap-6 bg-background/20 border-2 border-primary/20 p-4 h-24 md:h-28 overflow-hidden">
+  <header className="relative flex h-28 w-full flex-row items-center gap-5 overflow-hidden border border-primary/20 bg-background/20 p-4 md:h-32 md:gap-6 md:p-5">
     <div className="group relative size-16 shrink-0 sm:size-20 md:size-24 transition-transform duration-300 hover:scale-[1.02]">
       <div className="absolute inset-[-6px] rounded-full border border-primary/10" />
       <div className="absolute inset-[-3px] rounded-full border-t-2 border-l-2 border-primary/40 group-hover:border-primary transition-colors" />
@@ -27,14 +27,14 @@ const HeaderSection = React.memo(() => (
         </span>
         <div className="h-[1px] w-12 bg-primary/20" />
       </div>
-      <div className="flex flex-col md:flex-row md:items-end gap-0 md:gap-3 leading-none">
+      <div className="flex flex-col gap-0 leading-none md:flex-row md:items-end md:gap-3">
         <h1
-          className="font-mono text-3xl font-black tracking-tighter text-transparent sm:text-4xl md:text-6xl uppercase"
+          className="font-mono text-3xl font-black tracking-tighter text-transparent uppercase sm:text-4xl md:text-6xl"
           style={{ WebkitTextStroke: "1px var(--primary)" }}
         >
           {UI_DATA.profile.name.split(" ")[0]}
         </h1>
-        <h1 className="font-mono text-3xl font-black tracking-tighter text-primary sm:text-4xl md:text-6xl uppercase">
+        <h1 className="font-mono text-3xl font-black tracking-tighter text-primary uppercase sm:text-4xl md:text-6xl">
           {UI_DATA.profile.name.split(" ")[1]}
         </h1>
       </div>

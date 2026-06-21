@@ -8,13 +8,14 @@ import {
   useScroll,
   useMotionValueEvent,
 } from "framer-motion";
-import { ArrowDown } from "@phosphor-icons/react";
+import { ArrowDown, ArrowRight } from "@phosphor-icons/react";
 
 // Internal Libs
 import { useBrowserTab } from "@/components/BrowserTab";
 
 // Components
-import Profile from "@/components/Profile/Profile";
+import Profile from "@/components/Profile_experiment/Profile";
+
 import { SystemLoader } from "@/components/Loaders/Loader";
 import SpaceParallax from "@/components/BackgroundEffects/SpaceParallax";
 import ContactSection from "@/components/Profile/ContactMe";
@@ -96,7 +97,7 @@ const ScrollGauge = React.memo(({ active }: { active: string }) => (
 
 // --- 3. MAIN ROUTE & COMPONENT ---
 export const Route = createFileRoute("/")({ component: App });
-const SECTIONS = ["PROFILE", "CONTACT"];
+const SECTIONS = ["PROFILE", "SERVICES", "CONTACT"];
 
 function App() {
   const [loading, setLoading] = useState(true);
@@ -152,7 +153,6 @@ function App() {
     },
     [container],
   );
-
   // Browser Tab Metadata
   // useBrowserTab({ section: activeSection, appSuffix: "x_x" });
 
@@ -250,7 +250,53 @@ function App() {
               </section>
 
               <section className="h-screen w-full snap-start flex items-center justify-center p-4 overflow-hidden">
-                <ContactSection />
+                <div className="flex h-[88vh] w-full max-w-7xl items-center justify-center">
+                  <div className="grid w-full max-w-6xl gap-4 md:grid-cols-3">
+                    {[
+                      {
+                        title: "Web Design",
+                        text: "Modern portfolio and business sites with clear structure.",
+                      },
+                      {
+                        title: "Frontend Build",
+                        text: "Responsive implementation with clean details and motion.",
+                      },
+                      {
+                        title: "Product UI",
+                        text: "Interfaces shaped for clarity, speed, and consistency.",
+                      },
+                    ].map((item) => (
+                      <div
+                        key={item.title}
+                        className="relative flex min-h-56 flex-col justify-between border border-primary/15 bg-background/10 p-5 backdrop-blur-xl md:min-h-72"
+                      >
+                        <div className="text-[10px] uppercase tracking-[0.4em] text-primary/45">
+                          Offered Service
+                        </div>
+                        <div>
+                          <h2 className="mt-3 text-2xl font-black uppercase tracking-tight text-foreground">
+                            {item.title}
+                          </h2>
+                          <p className="mt-3 max-w-sm text-sm leading-6 text-foreground/70">
+                            {item.text}
+                          </p>
+                        </div>
+                        <div className="mt-6 flex items-center gap-2 text-[10px] uppercase tracking-[0.35em] text-primary/40">
+                          <span>Learn More</span>
+                          <ArrowRight size={14} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </section>
+
+              <section className="h-screen w-full snap-start flex items-center justify-center p-4 overflow-hidden">
+                <div className="flex h-[92vh] w-full max-w-7xl items-stretch justify-center">
+                  <div className="w-full max-w-5xl">
+                    <ContactSection />
+                  </div>
+                </div>
               </section>
             </div>
 
@@ -359,7 +405,7 @@ function App() {
                     <span className="text-[6px] tracking-[0.5em] font-black uppercase text-primary/80">
                       {activeSection === "CONTACT"
                         ? "EXEC::REBOOT"
-                        : "EXEC::NEXT_MOD"}
+                        : "EXEC::NEXT_MOD"}{" "}
                     </span>
                     <div className="flex gap-0.5">
                       {[...Array(SECTIONS.length)].map((_, i) => (
