@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as ProjectsRouteImport } from './routes/projects'
 import { Route as BlogRouteImport } from './routes/blog'
 import { Route as AlbumsRouteImport } from './routes/albums'
+import { Route as SplatRouteImport } from './routes/$'
 import { Route as IndexRouteImport } from './routes/index'
 
 const ProjectsRoute = ProjectsRouteImport.update({
@@ -29,6 +30,11 @@ const AlbumsRoute = AlbumsRouteImport.update({
   path: '/albums',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SplatRoute = SplatRouteImport.update({
+  id: '/$',
+  path: '/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -37,12 +43,14 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/$': typeof SplatRoute
   '/albums': typeof AlbumsRoute
   '/blog': typeof BlogRoute
   '/projects': typeof ProjectsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/$': typeof SplatRoute
   '/albums': typeof AlbumsRoute
   '/blog': typeof BlogRoute
   '/projects': typeof ProjectsRoute
@@ -50,20 +58,22 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/$': typeof SplatRoute
   '/albums': typeof AlbumsRoute
   '/blog': typeof BlogRoute
   '/projects': typeof ProjectsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/albums' | '/blog' | '/projects'
+  fullPaths: '/' | '/$' | '/albums' | '/blog' | '/projects'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/albums' | '/blog' | '/projects'
-  id: '__root__' | '/' | '/albums' | '/blog' | '/projects'
+  to: '/' | '/$' | '/albums' | '/blog' | '/projects'
+  id: '__root__' | '/' | '/$' | '/albums' | '/blog' | '/projects'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  SplatRoute: typeof SplatRoute
   AlbumsRoute: typeof AlbumsRoute
   BlogRoute: typeof BlogRoute
   ProjectsRoute: typeof ProjectsRoute
@@ -92,6 +102,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AlbumsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/$': {
+      id: '/$'
+      path: '/$'
+      fullPath: '/$'
+      preLoaderRoute: typeof SplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -104,6 +121,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  SplatRoute: SplatRoute,
   AlbumsRoute: AlbumsRoute,
   BlogRoute: BlogRoute,
   ProjectsRoute: ProjectsRoute,

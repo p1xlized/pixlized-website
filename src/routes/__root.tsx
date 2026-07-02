@@ -6,6 +6,7 @@ import appCss from "../styles.css?url";
 
 import Navbar from "@/components/Navbar/Navbar";
 import { Footer } from "@/components/Footer";
+import NotFound from "@/components/NotFound";
 
 export const Route = createRootRoute({
   head: () => ({
@@ -15,9 +16,14 @@ export const Route = createRootRoute({
       { title: "@p1xlized" },
       { favicon: "/logo.svg" },
     ],
-    links: [{ rel: "stylesheet", href: appCss }],
+    links: [
+      { rel: "preload", href: appCss, as: "style" },
+      { rel: "stylesheet", href: appCss },
+    ],
   }),
+
   shellComponent: RootDocument,
+  notFoundComponent: () => <NotFound />,
 });
 
 function RootDocument({ children }: { children: React.ReactNode }) {
@@ -26,7 +32,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       <head>
         <HeadContent />
       </head>
-      <body>
+      <body className="bg-background">
         <Navbar />
         <Footer />
         {children}

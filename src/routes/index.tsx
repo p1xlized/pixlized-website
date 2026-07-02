@@ -49,55 +49,57 @@ const TimeDisplay = React.memo(() => {
   );
 });
 
-const ScrollGauge = React.memo(({ active }: { active: string }) => (
-  <div className="fixed top-1/2 right-8 z-50 -translate-y-1/2 hidden md:flex flex-col items-center gap-3">
-    <div className="flex flex-col items-center gap-1.5 opacity-40">
-      <div className="flex items-center gap-1">
-        <div className="size-1 bg-primary animate-pulse" />
-        <div className="h-[2px] w-6 bg-primary" />
+const ScrollGauge = React.memo(({ active }: { active: string }) => {
+  const activeIndex = Math.max(0, SECTIONS.indexOf(active));
+  const progress = (activeIndex / (SECTIONS.length - 1)) * 100;
+
+  return (
+    <div className="fixed top-1/2 right-8 z-50 -translate-y-1/2 hidden md:flex flex-col items-center gap-3">
+      <div className="flex flex-col items-center gap-1.5 opacity-40">
+        <div className="flex items-center gap-1">
+          <div className="size-1 bg-primary animate-pulse" />
+          <div className="h-[2px] w-6 bg-primary" />
+        </div>
+        <span className="text-[6px] tracking-[0.4em] font-black uppercase">
+          Nav_Track
+        </span>
       </div>
-      <span className="text-[6px] tracking-[0.4em] font-black uppercase">
-        Nav_Track
-      </span>
-    </div>
 
-    <div className="relative flex items-center justify-center w-20">
-      <GaugeDecoration />
+      <div className="relative flex items-center justify-center w-20">
+        <GaugeDecoration />
 
-      <div className="flex flex-col items-center gap-2">
-        <div className="size-2 border border-primary/50 flex items-center justify-center opacity-60">
-          <div className="size-[2px] bg-primary" />
-        </div>
+        <div className="flex flex-col items-center gap-2">
+          <div className="size-2 border border-primary/50 flex items-center justify-center opacity-60">
+            <div className="size-[2px] bg-primary" />
+          </div>
 
-        {/* SPRING INDICATOR TRACK */}
-        <div className="relative h-72 w-[2px] bg-primary/10 rounded-full">
-          <motion.div
-            initial={false}
-            animate={{
-              // With only PROFILE and CONTACT pages, the indicator is either collapsed (PROFILE) or full (CONTACT)
-              scaleY: active === "PROFILE" ? 0 : 1,
-              opacity: [0.6, 1, 0.8],
-            }}
-            transition={{
-              scaleY: { type: "spring", stiffness: 70, damping: 18, mass: 0.8 },
-              opacity: { duration: 0.4 },
-            }}
-            style={{ originY: 0 }}
-            className="absolute top-0 w-full h-full bg-primary shadow-[0_0_15px_var(--primary)]"
-          />
-        </div>
+          <div className="relative h-72 w-[2px] bg-primary/10 rounded-full">
+            <motion.div
+              initial={false}
+              animate={{ height: `${progress}%` }}
+              transition={{ type: "spring", stiffness: 70, damping: 18, mass: 0.8 }}
+              className="absolute top-0 w-full bg-primary/40"
+            />
+            <motion.div
+              initial={false}
+              animate={{ top: `${progress}%` }}
+              transition={{ type: "spring", stiffness: 110, damping: 20, mass: 0.8 }}
+              className="absolute left-1/2 size-2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-primary/70 bg-primary"
+            />
+          </div>
 
-        <div className="size-2 border border-primary/50 flex items-center justify-center opacity-60">
-          <div className="size-[2px] bg-primary animate-ping" />
+          <div className="size-2 border border-primary/50 flex items-center justify-center opacity-60">
+            <div className="size-[2px] bg-primary animate-ping" />
+          </div>
         </div>
       </div>
     </div>
-  </div>
-));
+  );
+});
 
 // --- 3. MAIN ROUTE & COMPONENT ---
 export const Route = createFileRoute("/")({ component: App });
-const SECTIONS = ["PROFILE", "SERVICES", "CONTACT"];
+const SECTIONS = ["PROFILE", "PROJECTS", "CONTACT"];
 
 function App() {
   const [loading, setLoading] = useState(true);
@@ -251,38 +253,54 @@ function App() {
 
               <section className="h-screen w-full snap-start flex items-center justify-center p-4 overflow-hidden">
                 <div className="flex h-[88vh] w-full max-w-7xl items-center justify-center">
-                  <div className="grid w-full max-w-6xl gap-4 md:grid-cols-3">
+                  <div className="grid w-full max-w-6xl gap-4 md:grid-cols-12 md:grid-rows-2">
+                    <div className="relative flex min-h-64 flex-col justify-between border border-primary/20 bg-background/10 p-6 backdrop-blur-xl md:col-span-8 md:row-span-2 md:min-h-0">
+                      <div className="text-[10px] uppercase tracking-[0.4em] text-primary/45">
+                        Featured Project
+                      </div>
+                      <div>
+                        <h2 className="mt-3 text-3xl font-black uppercase tracking-tight text-foreground md:text-4xl">
+                          Pixlized Platform
+                        </h2>
+                        <p className="mt-3 max-w-xl text-sm leading-6 text-foreground/70">
+                          Complete design system + frontend architecture with
+                          motion-driven UI, responsive layouts, and performance-first
+                          implementation.
+                        </p>
+                      </div>
+                      <div className="mt-6 flex items-center gap-2 text-[10px] uppercase tracking-[0.35em] text-primary/40">
+                        <span>View Case Study</span>
+                        <ArrowRight size={14} />
+                      </div>
+                    </div>
+
                     {[
                       {
-                        title: "Web Design",
-                        text: "Modern portfolio and business sites with clear structure.",
+                        title: "Brand Website",
+                        text: "Sharp marketing site with clean information flow and smooth interactions.",
                       },
                       {
-                        title: "Frontend Build",
-                        text: "Responsive implementation with clean details and motion.",
-                      },
-                      {
-                        title: "Product UI",
-                        text: "Interfaces shaped for clarity, speed, and consistency.",
+                        title: "UI Motion Kit",
+                        text: "Reusable animation components for consistent, modern micro-interactions.",
                       },
                     ].map((item) => (
                       <div
                         key={item.title}
-                        className="relative flex min-h-56 flex-col justify-between border border-primary/15 bg-background/10 p-5 backdrop-blur-xl md:min-h-72"
+                        className="relative flex min-h-48 flex-col justify-between border border-primary/15 bg-background/10 p-5 backdrop-blur-xl md:col-span-4"
                       >
                         <div className="text-[10px] uppercase tracking-[0.4em] text-primary/45">
-                          Offered Service
+                          Best Project
                         </div>
                         <div>
-                          <h2 className="mt-3 text-2xl font-black uppercase tracking-tight text-foreground">
+                          <h3 className="mt-3 text-xl font-black uppercase tracking-tight text-foreground">
                             {item.title}
-                          </h2>
-                          <p className="mt-3 max-w-sm text-sm leading-6 text-foreground/70">
+                          </h3>
+                          <p className="mt-2 text-sm leading-6 text-foreground/70">
                             {item.text}
                           </p>
                         </div>
-                        <div className="mt-6 flex items-center gap-2 text-[10px] uppercase tracking-[0.35em] text-primary/40">
-                          <span>Learn More</span>
+                        <div className="mt-5 flex items-center gap-2 text-[10px] uppercase tracking-[0.35em] text-primary/40">
+                          <span>Open Project</span>
                           <ArrowRight size={14} />
                         </div>
                       </div>
@@ -436,5 +454,3 @@ function App() {
     </div>
   );
 }
-
-export default App;

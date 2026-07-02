@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { AnimatePresence, motion } from "framer-motion";
 
@@ -21,8 +21,9 @@ export const Route = createFileRoute("/projects")({
 });
 
 const ITEMS_PER_PAGE = 6;
+const PROJECTS = PORTFOLIO_DATA.projects;
 
-export default function ProjectsPage() {
+function ProjectsPage() {
   const [isBooting, setIsBooting] = useState(true);
   const [isUplinking, setIsUplinking] = useState(false);
   const [time, setTime] = useState("");
@@ -38,8 +39,6 @@ export default function ProjectsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortOrder, setSortOrder] = useState<"ASC" | "DESC">("DESC");
 
-  const projects = PORTFOLIO_DATA.projects;
-
   // ⏱ Clock
   useEffect(() => {
     const updateTime = () =>
@@ -51,7 +50,7 @@ export default function ProjectsPage() {
 
   // ✅ FILTER + SORT
   const filteredProjects = useMemo(() => {
-    return projects
+    return PROJECTS
       .filter((p: any) => {
         const matchesTag = filter === "ALL" || p.tag === filter;
         const matchesType =
@@ -67,7 +66,7 @@ export default function ProjectsPage() {
         const dateB = new Date(b.releasedAt).getTime();
         return sortOrder === "ASC" ? dateA - dateB : dateB - dateA;
       });
-  }, [filter, workType, searchQuery, sortOrder, projects]);
+  }, [filter, workType, searchQuery, sortOrder]);
 
   // ✅ PAGINATION & VIEW LOGIC
   const totalPages = Math.ceil(filteredProjects.length / ITEMS_PER_PAGE);
@@ -83,7 +82,7 @@ export default function ProjectsPage() {
     setCurrentPage(1);
   }, [filter, workType, searchQuery]);
 
-  const handleProjectSelect = (id: number | null) => {
+  const handleProjectSelect = useCallback((id: number | null) => {
     setIsUplinking(true);
     setTimeout(() => {
       setSelectedId(id);
@@ -92,7 +91,12 @@ export default function ProjectsPage() {
       // On mobile, scroll to top when selecting/deselecting to ensure visibility
       window.scrollTo(0, 0);
     }, 1200);
-  };
+  }, []);
+
+  const selectedProject = useMemo(
+    () => PROJECTS.find((p: any) => p.id === selectedId) ?? null,
+    [selectedId],
+  );
   useBrowserTab({
     section: "Projects",
   });
@@ -216,7 +220,7 @@ export default function ProjectsPage() {
                 transition={{ duration: 0.4 }}
               >
                 <ProjectDetailView
-                  project={projects.find((p: any) => p.id === selectedId)!}
+                  project={selectedProject!}
                   currentIndex={currentIndex}
                   setCurrentIndex={setCurrentIndex}
                   onBack={() => handleProjectSelect(null)}

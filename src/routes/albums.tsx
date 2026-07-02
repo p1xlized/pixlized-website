@@ -1,6 +1,12 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useMemo,
+  useCallback,
+} from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { AnimatePresence, motion } from "framer-motion";
 
@@ -13,13 +19,13 @@ import { setNavbarVisibility } from "@/components/Navbar/Navbar";
 import AlbumsList from "@/components/Music/AlbumsList";
 import TracksList from "@/components/Music/TrackList";
 import MusicNavbar from "@/components/Navbar/MusicNavbar";
-import InlineLoader from "@/components/Loaders/MusicLoader";
+import AudioBootLoader from "@/components/Loaders/MusicLoader";
 
 export const Route = createFileRoute("/albums")({
   component: MusicPage,
 });
 
-export default function MusicPage() {
+function MusicPage() {
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -56,10 +62,14 @@ export default function MusicPage() {
 
   // --- DYNAMIC BROWSER TAB ---
   // Changes to "▶ Song Name", "⏸ Song Name", or just "Music"
+  const browserTabSection = useMemo(
+    () =>
+      activeTrack ? `${isPlaying ? "▶" : "⏸"} ${activeTrack.name}` : "Music",
+    [activeTrack, isPlaying],
+  );
+
   useBrowserTab({
-    section: activeTrack
-      ? `${isPlaying ? "▶" : "⏸"} ${activeTrack.name}`
-      : "Music",
+    section: browserTabSection,
   });
 
   useEffect(() => {
@@ -68,21 +78,25 @@ export default function MusicPage() {
     }
   }, [volume]);
 
-  const handleTimeUpdate = () =>
-    setCurrentTime(audioRef.current?.currentTime || 0);
-  const handleLoadedMetadata = () =>
-    setDuration(audioRef.current?.duration || 0);
+  const handleTimeUpdate = useCallback(
+    () => setCurrentTime(audioRef.current?.currentTime || 0),
+    [],
+  );
+  const handleLoadedMetadata = useCallback(
+    () => setDuration(audioRef.current?.duration || 0),
+    [],
+  );
 
   // --- ADDED SCRUBBING FUNCTION ---
-  const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSeek = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const time = Number(e.target.value);
     if (audioRef.current) {
       audioRef.current.currentTime = time;
     }
     setCurrentTime(time);
-  };
+  }, []);
 
-  const handleNext = () => {
+  const handleNext = useCallback(() => {
     if (!activeAlbum || !activeTrack) return;
     const idx = activeAlbum.tracks.findIndex(
       (t) => t.trackNumber === activeTrack.trackNumber,
@@ -92,9 +106,9 @@ export default function MusicPage() {
       setCurrentTime(0);
       setIsPlaying(true);
     }
-  };
+  }, [activeAlbum, activeTrack]);
 
-  const handlePrev = () => {
+  const handlePrev = useCallback(() => {
     if (!activeAlbum || !activeTrack) return;
     const idx = activeAlbum.tracks.findIndex(
       (t) => t.trackNumber === activeTrack.trackNumber,
@@ -104,9 +118,9 @@ export default function MusicPage() {
       setCurrentTime(0);
       setIsPlaying(true);
     }
-  };
+  }, [activeAlbum, activeTrack]);
 
-  const handleTrackEnded = () => {
+  const handleTrackEnded = useCallback(() => {
     if (activeAlbum && activeTrack) {
       const idx = activeAlbum.tracks.findIndex(
         (t) => t.trackNumber === activeTrack.trackNumber,
@@ -118,31 +132,36 @@ export default function MusicPage() {
     }
     setIsPlaying(false);
     setCurrentTime(0);
-  };
+  }, [activeAlbum, activeTrack, handleNext]);
 
-  const handleAlbumSelect = (album: Album) => {
+  const handleAlbumSelect = useCallback((album: Album) => {
     setActiveAlbum(album);
     setActiveTrack(album.tracks[0]);
     setIsPlaying(false);
     setCurrentTime(0);
-  };
+  }, []);
 
-  const handleTrackSelect = (track: Track) => {
+  const handleTrackSelect = useCallback((track: Track) => {
     setActiveTrack(track);
     setIsPlaying(true);
-  };
+  }, []);
 
-  const handleBackToAlbums = () => {
+  const handleBackToAlbums = useCallback(() => {
     setIsPlaying(false);
     setActiveAlbum(null);
     setActiveTrack(null);
     setCurrentTime(0);
-  };
+  }, []);
+
+  const handleExit = useCallback(() => navigate({ to: "/" }), [navigate]);
+  const handleTogglePlay = useCallback(() => setIsPlaying((prev) => !prev), []);
 
   return (
     <>
       <AnimatePresence>
-        {isLoading && <InlineLoader onComplete={() => setIsLoading(false)} />}
+        {isLoading && (
+          <AudioBootLoader onComplete={() => setIsLoading(false)} />
+        )}
       </AnimatePresence>
 
       <main className="relative flex w-full h-screen items-center justify-center bg-background/40 p-4 font-mono text-primary md:p-8 overflow-hidden">
@@ -167,7 +186,7 @@ export default function MusicPage() {
               <MusicNavbar
                 activeAlbum={activeAlbum}
                 onBackToArchive={handleBackToAlbums}
-                onExit={() => navigate({ to: "/" })}
+                onExit={handleExit}
               />
 
               <div className="flex w-full h-full flex-col items-center justify-center overflow-hidden">
@@ -201,7 +220,7 @@ export default function MusicPage() {
               album={activeAlbum}
               track={activeTrack}
               isPlaying={isPlaying}
-              onTogglePlay={() => setIsPlaying(!isPlaying)}
+              onTogglePlay={handleTogglePlay}
               currentTime={currentTime}
               duration={duration}
               onSeek={handleSeek}
