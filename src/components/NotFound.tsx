@@ -1,6 +1,4 @@
 "use client";
-
-import React from "react";
 import { motion } from "framer-motion";
 import { WarningCircle } from "@phosphor-icons/react";
 

@@ -196,8 +196,6 @@ export default function ProfileExperiment() {
               </p>
             </div>
 
-            <div className="my-10 h-px w-full max-w-2xl bg-gradient-to-r from-transparent via-border to-transparent" />
-
             {/* Simplified Navigation */}
             <div className="flex w-full max-w-2xl flex-wrap items-center justify-center gap-3">
               {navCards.map((item, index) => {
