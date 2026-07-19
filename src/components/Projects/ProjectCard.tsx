@@ -1,131 +1,118 @@
-import { ArrowUpRight, Code, Cpu } from "@phosphor-icons/react";
-import { motion } from "framer-motion";
+import type { Project } from "@/db/db"
 
-export default function ProjectArchiveCard({ project, onClick }: any) {
-  return (
-    <motion.div
-      onClick={onClick}
-      whileHover="hover"
-      initial="initial"
-      className="group relative flex flex-col border border-primary/20 bg-background/40 backdrop-blur-md cursor-pointer overflow-hidden transition-all duration-500 hover:border-primary/60 hover:shadow-[0_0_40px_rgba(var(--primary-rgb),0.15)]"
-    >
-      {/* 1. ULTRA-MINIMAL HEADER */}
-      <div className="flex items-center justify-between px-3 py-1.5 bg-primary/10 border-b border-primary/10">
-        <div className="flex items-center gap-2">
-          <div className="size-1.5 bg-primary animate-pulse rounded-full" />
-          <span className="text-[8px] font-bold tracking-[0.3em] text-primary/70 uppercase">
-            Node_{project.id.toString().padStart(3, "0")}
-          </span>
+interface ProjectCardProps {
+  project: Project
+  onSelect: (project: Project) => void
+  layoutSize?: "small" | "medium" | "large"
+}
+
+export function ProjectCard({
+  project,
+  onSelect,
+  layoutSize = "medium",
+}: ProjectCardProps) {
+  // --- MOBILE LIST VIEW RENDERING ---
+  if (layoutSize === "small") {
+    return (
+      <button
+        onClick={() => onSelect(project)}
+        className="group flex w-full items-center gap-4 py-1 text-left focus:outline-none"
+      >
+        {/* Compact left side Thumbnail */}
+        <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg border border-border bg-muted">
+          <img
+            src={project.cover}
+            alt={project.title}
+            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+          />
         </div>
-        <span className="text-[8px] font-mono text-primary/40 group-hover:text-primary transition-colors">
-          {project.date}
+
+        {/* Dynamic center content */}
+        <div className="min-w-0 flex-1 space-y-1">
+          <div className="flex items-center gap-1.5">
+            <span className="text-[9px] font-extrabold tracking-wider text-primary uppercase">
+              {project.isPersonal ? "Personal" : "Professional"}
+            </span>
+            <span className="text-[9px] text-muted-foreground/40">•</span>
+            <span className="font-mono text-[9px] text-muted-foreground">
+              {project.date}
+            </span>
+          </div>
+          <h3 className="truncate text-sm font-bold tracking-tight text-foreground transition-colors group-hover:text-primary">
+            {project.title}
+          </h3>
+          <p className="line-clamp-1 text-xs text-muted-foreground">
+            {project.description}
+          </p>
+        </div>
+
+        {/* Subtle Right Arrow indicator */}
+        <div className="shrink-0 pr-1 text-muted-foreground/50 transition-colors group-hover:text-primary">
+          <span className="font-mono text-sm">→</span>
+        </div>
+      </button>
+    )
+  }
+
+  // --- DESKTOP ASPECT SQUARE GRID RENDERING ---
+  return (
+    <button
+      onClick={() => onSelect(project)}
+      className="group rounded-xsborder relative flex aspect-square w-full flex-col overflow-hidden border-border bg-card text-left text-foreground transition-all duration-300 hover:border-primary/50 hover:shadow-xl hover:shadow-primary/5 focus:ring-2 focus:ring-primary/40 focus:outline-none"
+    >
+      {/* 1. Cover Image */}
+      <div className="absolute inset-0 z-0 h-full w-full bg-muted">
+        <img
+          src={project.cover}
+          alt={project.title}
+          className="h-full w-full object-cover transition-all duration-500 group-hover:scale-105 group-hover:brightness-[0.25]"
+        />
+        {/* Dark subtle overlay for consistent readability */}
+        <div className="absolute inset-0 bg-gradient-to-t from-background/95 via-background/45 to-transparent opacity-100 transition-opacity duration-300 group-hover:opacity-20" />
+      </div>
+
+      {/* 2. Top corner tags */}
+      <div className="absolute top-3 right-3 z-20 flex flex-wrap items-center justify-end gap-1.5">
+        {project.isVideo && (
+          <span className="rounded bg-red-600 px-1.5 py-0.5 text-[8px] font-extrabold tracking-wider text-white uppercase shadow-sm">
+            VIDEO
+          </span>
+        )}
+        <span className="rounded border border-primary/20 bg-background/95 px-1.5 py-0.5 text-[8px] font-extrabold tracking-wider text-primary uppercase shadow-sm backdrop-blur-sm">
+          {project.tag}
         </span>
       </div>
 
-      {/* 2. IMAGE CONTAINER (Vivid & Fluid) */}
-      <div className="relative aspect-16/10 overflow-hidden">
-        <motion.img
-          src={project.cover}
-          variants={{
-            initial: { scale: 1 },
-            hover: { scale: 1.1 },
-          }}
-          transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-          className="size-full object-cover"
-          alt={project.title}
-        />
-
-        {/* Animated Gradient Overlay */}
-
-        {/* Status Badge */}
-        <div className="absolute top-3 left-3">
-          <div
-            className={`px-2 py-0.5 text-[8px] font-black uppercase tracking-widest border backdrop-blur-md ${
-              project.isPersonal
-                ? "border-blue-500/50 text-blue-400 bg-blue-500/10"
-                : "border-emerald-500/50 text-emerald-400 bg-emerald-500/10"
-            }`}
-          >
-            {project.isPersonal ? "Personal" : "Freelance"}
-          </div>
+      {/* 3. Static metadata view */}
+      <div className="absolute inset-x-0 bottom-0 z-10 p-4 transition-all duration-300 group-hover:translate-y-4 group-hover:opacity-0">
+        <div className="flex items-center justify-between text-[8px] font-bold tracking-wider text-muted-foreground uppercase">
+          <span className="font-black text-primary/90">
+            {project.isPersonal ? "Personal" : "Professional"}
+          </span>
+          <span className="font-mono">{project.date}</span>
         </div>
-
-        {/* Fluid Action Button */}
-        <motion.div
-          variants={{
-            initial: { opacity: 0, x: 10, y: 10 },
-            hover: { opacity: 1, x: 0, y: 0 },
-          }}
-          className="absolute bottom-3 right-3 p-2 bg-primary text-background"
-        >
-          <ArrowUpRight size={14} weight="bold" />
-        </motion.div>
+        <h3 className="mt-1.5 truncate text-sm font-bold tracking-tight text-white drop-shadow-sm">
+          {project.title}
+        </h3>
       </div>
 
-      {/* 3. COMPACT CONTENT */}
-      <div className="p-4 space-y-3">
-        <motion.div
-          variants={{
-            initial: { y: 0 },
-            hover: { y: -2 },
-          }}
-          className="space-y-2"
-        >
-          <h3 className="text-xl font-bold tracking-tight text-foreground/90 group-hover:text-primary transition-colors duration-300">
-            {project.title}
-          </h3>
-
-          {/* Tech Stack - Pill Style */}
-          <div className="flex flex-wrap gap-1.5">
-            {project.tech.split(",").map((t: string, i: number) => (
-              <motion.span
-                key={t}
-                variants={{
-                  initial: { opacity: 0.6, y: 0 },
-                  hover: { opacity: 1, y: -1 },
-                }}
-                transition={{ delay: i * 0.05 }}
-                className="flex items-center gap-1 text-[9px] font-bold border border-primary/10 bg-primary/5 px-2 py-0.5 text-primary/80 uppercase tracking-tighter"
-              >
-                <Code size={8} />
-                {t.trim()}
-              </motion.span>
-            ))}
-          </div>
-        </motion.div>
-
-        {/* 4. INTERACTIVE FOOTER */}
-        <div className="flex items-center justify-between pt-2">
-          <div className="flex gap-1">
-            {[...Array(4)].map((_, i) => (
-              <motion.div
-                key={i}
-                variants={{
-                  initial: { scaleY: 1, opacity: 0.2 },
-                  hover: { scaleY: [1, 2, 1], opacity: 1 },
-                }}
-                transition={{ repeat: Infinity, duration: 1, delay: i * 0.1 }}
-                className="w-[2px] h-2 bg-primary"
-              />
-            ))}
-          </div>
-          <div className="flex items-center gap-2 opacity-30 group-hover:opacity-100 transition-opacity">
-            <Cpu size={12} className="text-primary" />
-            <span className="text-[8px] font-mono tracking-widest text-primary">
-              V_2.0
+      {/* 4. Hover deep metadata context */}
+      <div className="pointer-events-none absolute inset-0 z-10 flex flex-col justify-between p-4 opacity-0 transition-all duration-300 group-hover:opacity-100">
+        <div />
+        <div className="translate-y-4 space-y-2 transition-transform duration-300 group-hover:translate-y-0">
+          <p className="line-clamp-4 text-xs leading-relaxed font-medium text-slate-200">
+            {project.description}
+          </p>
+          <div className="flex items-center justify-between border-t border-white/10 pt-1.5">
+            <span className="font-mono text-[8px] text-slate-400">
+              {project.date}
+            </span>
+            <span className="text-[9px] font-black tracking-wider text-primary uppercase">
+              VIEW DETAILS →
             </span>
           </div>
         </div>
       </div>
-
-      {/* Bottom Scanning Line Accent */}
-      <motion.div
-        variants={{
-          initial: { scaleX: 0 },
-          hover: { scaleX: 1 },
-        }}
-        className="absolute bottom-0 left-0 h-0.75 w-full bg-primary origin-left shadow-[0_0_15px_var(--primary)]"
-      />
-    </motion.div>
-  );
+    </button>
+  )
 }

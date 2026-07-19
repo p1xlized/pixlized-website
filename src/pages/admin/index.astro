@@ -1,0 +1,70 @@
+---
+import Layout from "../../layouts/main.astro"
+import { db } from "../../db/db"
+import "@/styles/global.css"
+
+if (Astro.request.method === "POST") {
+  const formData = await Astro.request.formData()
+  const idToDelete = formData.get("deleteId")
+  if (idToDelete) {
+    db.prepare("DELETE FROM projects WHERE id = ?").run(Number(idToDelete))
+  }
+}
+
+const items = db.prepare("SELECT * FROM projects").all()
+---
+
+<Layout title="Admin Dashboard">
+  <main class="mx-auto max-w-3xl bg-black px-6 py-16 text-white">
+    <div
+      class="mb-8 flex items-center justify-between border-b border-zinc-800 pb-6"
+    >
+      <div>
+        <h1 class="text-3xl font-bold">Dashboard</h1>
+        <a href="/projects" class="text-xs text-zinc-400 hover:underline"
+          >← View Live Portfolio</a
+        >
+      </div>
+      <a
+        href="/admin/create"
+        class="rounded-md bg-white px-4 py-2 text-sm font-medium text-black hover:bg-neutral-200"
+      >
+        + New Project
+      </a>
+    </div>
+
+    <div
+      class="overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900/20"
+    >
+      {
+        items.length === 0 ? (
+          <p class="p-6 text-center text-zinc-400">
+            No projects in database yet.
+          </p>
+        ) : (
+          <div class="divide-y divide-zinc-800">
+            {items.map((project: any) => (
+              <div class="flex items-center justify-between p-4">
+                <div>
+                  <h3 class="font-medium">{project.title}</h3>
+                  <p class="max-w-md truncate text-xs text-zinc-400">
+                    {project.description}
+                  </p>
+                </div>
+                <form method="POST">
+                  <input type="hidden" name="deleteId" value={project.id} />
+                  <button
+                    type="submit"
+                    class="text-xs font-medium text-red-400 hover:text-red-300"
+                  >
+                    Delete
+                  </button>
+                </form>
+              </div>
+            ))}
+          </div>
+        )
+      }
+    </div>
+  </main>
+</Layout>

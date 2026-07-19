@@ -1,20 +1,13 @@
 {
+  "extends": "astro/tsconfigs/strict",
+  "include": [".astro/types.d.ts", "**/*"],
+  "exclude": ["dist"],
   "compilerOptions": {
-    "target": "ESNext",
-    "module": "ESNext",
-    "moduleResolution": "Bundler",
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "allowJs": true,
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "strict": true,
-    "noEmit": true,
     "jsx": "react-jsx",
     "jsxImportSource": "react",
+    "types": ["node"],
     "paths": {
       "@/*": ["./src/*"],
     },
   },
-  "include": ["src", "vite.config.ts"],
 }

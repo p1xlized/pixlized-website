@@ -1,0 +1,55 @@
+---
+import ProjectsLayout from "../layouts/ProjectsLayout.astro"
+import { ProjectList } from "../components/Projects/ProjectsList"
+import { db } from "../db/db"
+import "@/styles/global.css"
+
+const rawProjects = db
+  .prepare("SELECT * FROM projects ORDER BY releasedAt DESC")
+  .all() as any[]
+
+const cleanProjects = rawProjects.map((row) => {
+  return {
+    id: row.id,
+    title: row.title,
+    tech: row.tech,
+    role: row.role,
+    date: row.date,
+    releasedAt: row.releasedAt,
+    tag: row.tag as "MOBILE" | "WEB" | "GAME",
+    description: row.description,
+    cover: row.cover,
+    githubUrl: row.githubUrl,
+    projectUrl: row.projectUrl || undefined,
+    videoUrl: row.videoUrl || undefined,
+    isVideo: row.isVideo === 1,
+    isFeatured: row.isFeatured === 1,
+    isPersonal: row.isPersonal === 1,
+    imgs: row.imgs ? JSON.parse(row.imgs) : [],
+    features: row.features ? JSON.parse(row.features) : [],
+    metrics: row.metrics ? JSON.parse(row.metrics) : [],
+    awards: row.awards ? JSON.parse(row.awards) : [],
+    stack: row.stack ? JSON.parse(row.stack) : [],
+  }
+})
+---
+
+<ProjectsLayout>
+  <section
+    data-label="Projects"
+    class="flex h-full w-full shrink-0 snap-start flex-col justify-between"
+  >
+    <!-- Header Block: 12vh -->
+    <div class="flex h-[12vh] shrink-0 flex-col justify-center space-y-1">
+      <h1 class="text-2xl font-bold tracking-tight md:text-3xl">Projects</h1>
+      <p class="text-xs leading-snug text-muted-foreground">
+        Tools, open-source projects, and experiments I've built.
+      </p>
+    </div>
+
+    <!-- Active Component Frame: Balanced at 76vh with explicit bottom boundary safety padding -->
+    <div class="hided-scrollbar h-[76vh] w-full overflow-y-auto pr-1 pb-12">
+      <ProjectList client:load initialProjects={cleanProjects} />
+    </div>
+  </section>
+</ProjectsLayout>
