@@ -8,7 +8,7 @@ compatibility_date = "2024-01-01"
 # Production configuration
 [env.production]
 name = "pixlized-website"
-routes = ["https://pixlized.dev/*"]
+routes = ["https://pixlized.net/*", "https://www.pixlized.net/*"]
 
 # Development configuration
 [env.development]
@@ -20,9 +20,15 @@ name = "pixlized-website-dev"
 # ADMIN_PASS = "your-password"
 # FORMSPREE_ENDPOINT = "your-formspree-endpoint"
 
-# KV Namespace for database (optional - for persistent storage)
+# D1 Database for production
+[[d1_databases]]
+binding = "CF_D1_DB"
+database_name = "pixlized-db"
+database_id = "YOUR_D1_DATABASE_ID"
+
+# KV Namespace for persistent storage (optional)
 # [[kv_namespaces]]
-# binding = "DB"
+# binding = "KV"
 # id = "your-kv-namespace-id"
 
 # R2 Bucket for assets (optional)

@@ -6,9 +6,19 @@ import "@/styles/global.css"
 const posts = (await getCollection("blog")).sort(
   (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
 )
+
+// SEO for blog page
+const blogUrl = "https://pixlized.net/blog"
 ---
 
-<MainLayout>
+<MainLayout
+  title="Blog | @pixlized"
+  description="Read articles and tutorials by @pixlized on web development, AI, and creative coding."
+  ogTitle="Blog | @pixlized"
+  ogDescription="Read articles and tutorials by @pixlized on web development, AI, and creative coding."
+  ogUrl={blogUrl}
+  canonical={blogUrl}
+>
   <section
     data-label="Blog"
     class="flex h-full w-full shrink-0 flex-col justify-between md:snap-start"

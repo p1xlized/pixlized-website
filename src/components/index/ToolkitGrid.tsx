@@ -1,6 +1,6 @@
 import {
   Typescript,
-  Java,
+  Go,
   Python,
   CSharp,
   Rust,
@@ -8,41 +8,58 @@ import {
   React,
   Nextjs,
   Godot,
-  Unity,
+  Aws,
   Flutter,
   Git,
   Docker,
-  Prisma,
+  Azure,
   TailwindCss,
-  Openai,
+  OpenaiChatgpt,
   Ollama,
   Gemini,
-  Langchain
+  Langchain,
+  Bitwig,
 } from "@thesvg/react"
 
 interface Tool {
   name: string
-  icon: React.ComponentType<{ className?: string; variant?: string; fill?: string }>
+  icon: React.ComponentType<{
+    className?: string
+    variant?: string
+    fill?: string
+  }>
   variant?: string
 }
 
 const tools: Tool[] = [
+  // Programming Languages
   { name: "TypeScript", icon: Typescript, variant: "mono" },
-  { name: "Java", icon: Java },
   { name: "Python", icon: Python, variant: "mono" },
+  { name: "Go", icon: Go, variant: "mono" },
   { name: "C#", icon: CSharp },
   { name: "Rust", icon: Rust, variant: "mono" },
+
+  // Frameworks & Libraries
   { name: "Astro", icon: Astro, variant: "mono" },
   { name: "React", icon: React, variant: "mono" },
   { name: "Next.js", icon: Nextjs },
-  { name: "Godot", icon: Godot, variant: "mono" },
-  { name: "Unity", icon: Unity, variant: "mono" },
   { name: "Flutter", icon: Flutter, variant: "mono" },
-  { name: "Git", icon: Git, variant: "mono" },
+
+  // Game Engines
+  { name: "Godot", icon: Godot, variant: "mono" },
+
+  // Cloud & DevOps
+  { name: "AWS", icon: Aws, variant: "mono" },
+  { name: "Azure", icon: Azure },
   { name: "Docker", icon: Docker, variant: "mono" },
-  { name: "Prisma", icon: Prisma, variant: "mono" },
+
+  // Tools
+  { name: "Git", icon: Git, variant: "mono" },
   { name: "Tailwind", icon: TailwindCss },
-  { name: "OpenAI", icon: Openai },
+  { name: "Bitwig", icon: Bitwig, variant: "mono" },
+
+  // AI & ML
+  { name: "OpenAI", icon: OpenaiChatgpt, variant: "mono" },
   { name: "Ollama", icon: Ollama, variant: "mono" },
   { name: "Gemini", icon: Gemini },
   { name: "LangChain", icon: Langchain, variant: "mono" },
@@ -59,7 +76,7 @@ export default function ToolkitGrid() {
         >
           <div className="h-6 w-6 text-foreground transition-all duration-200 group-hover:scale-125 group-hover:text-primary group-hover:drop-shadow-md">
             <tool.icon
-              className="w-full h-full"
+              className="h-full w-full"
               fill="currentColor"
               variant={tool.variant}
             />

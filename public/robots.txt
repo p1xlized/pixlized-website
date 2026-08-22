@@ -1,3 +1,25 @@
-# https://www.robotstxt.org/robotstxt.html
 User-agent: *
-Disallow:
+Allow: /
+Disallow: /admin
+Disallow: /secret
+Disallow: /api
+
+Sitemap: https://pixlized.net/sitemap.xml
+Sitemap: https://www.pixlized.net/sitemap.xml
+
+# Crawl delay for polite crawling
+Crawl-delay: 2
+
+# Googlebot specific
+User-agent: Googlebot
+Allow: /
+Disallow: /admin
+Disallow: /secret
+Disallow: /api
+
+# Bingbot specific  
+User-agent: Bingbot
+Allow: /
+Disallow: /admin
+Disallow: /secret
+Disallow: /api

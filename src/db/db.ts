@@ -1,6 +1,12 @@
 import { DatabaseSync } from "node:sqlite"
 
-export const db = new DatabaseSync("local.db")
+// Check if we're running in Cloudflare environment
+const isCloudflare = process.env.CF_D1_DB !== undefined
+
+// Use Cloudflare D1 in production, local SQLite in development
+export const db = isCloudflare
+  ? (globalThis as any).CF_D1_DB
+  : new DatabaseSync("local.db")
 
 // ==========================================
 // 1. TYPES & INTERFACES
@@ -220,8 +226,7 @@ export const INITIAL_ALBUMS: Album[] = [
   {
     id: 1,
     title: "Old Demos",
-    description:
-      "Early experimental tracks and demos",
+    description: "Early experimental tracks and demos",
     cover: "/assets/music/cover-ambient.jpg",
     createdAt: "2022-10-15",
   },

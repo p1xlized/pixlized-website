@@ -1,20 +1,126 @@
 ---
 import "@/styles/global.css"
-import { Code, BookOpen, Music, Sun, Moon } from "@thesvg/react"
+import { ClientRouter } from "astro:transitions"
+
+interface Props {
+  title?: string
+  description?: string
+  ogTitle?: string
+  ogDescription?: string
+  ogUrl?: string
+  ogImage?: string
+  canonical?: string
+}
+
+const {
+  title = "@pixlized - Software Developer & Creative Engineer",
+  description = "Portfolio of @pixlized - Software Developer & Creative Engineer specializing in web development, game engines, and AI solutions.",
+  ogTitle,
+  ogDescription,
+  ogUrl,
+  ogImage,
+  canonical,
+} = Astro.props
+
+const url = Astro.url
+const baseUrl = "https://pixlized.net"
+const currentUrl = url.origin || baseUrl
+const finalOgTitle = ogTitle || title
+const finalOgDescription = ogDescription || description
+const finalOgUrl = ogUrl || currentUrl
+const finalOgImage = ogImage || `${baseUrl}/avatar.webp`
+const finalCanonical = canonical || currentUrl
 ---
 
 <html lang="en" class="h-full overflow-hidden select-none">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <ClientRouter />
+
+    <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <title>Astro App</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" href="/favicon.ico" />
+
+    <!-- Primary Meta Tags -->
+    <title>{finalOgTitle}</title>
+    <meta name="title" content={finalOgTitle} />
+    <meta name="description" content={finalOgDescription} />
+
+    <!-- Open Graph / Social Media -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={finalOgUrl} />
+    <meta property="og:title" content={finalOgTitle} />
+    <meta property="og:description" content={finalOgDescription} />
+    <meta property="og:image" content={finalOgImage} />
+    <meta property="og:site_name" content="@pixlized" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={finalOgTitle} />
+    <meta name="twitter:description" content={finalOgDescription} />
+    <meta name="twitter:image" content={finalOgImage} />
+    <meta name="twitter:creator" content="@pixlized" />
+    <meta name="twitter:site" content="@pixlized" />
+
+    <!-- Structured Data (JSON-LD) -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "Person",
+        "name": "@pixlized",
+        "url": "https://pixlized.net",
+        "image": "https://pixlized.net/avatar.webp",
+        "description": "Software Developer & Creative Engineer specializing in web development, game engines, and AI solutions",
+        "sameAs": [
+          "https://github.com/pixlized",
+          "https://twitter.com/pixlized",
+          "https://bsky.app/pixlized"
+        ],
+        "hasOccupation": {
+          "@type": "Occupation",
+          "name": "Software Developer"
+        },
+        "knowsAbout": [
+          "Web Development",
+          "TypeScript",
+          "Python",
+          "React",
+          "Astro",
+          "Game Development",
+          "AI/ML",
+          "Cloud Computing"
+        ]
+      }
+    </script>
+
+    <!-- Canonical URL -->
+    <link rel="canonical" href={finalCanonical} />
+
+    <!-- Theme Color -->
+    <meta name="theme-color" content="#3b82f6" />
+
+    <!-- Robots -->
+    <meta name="robots" content="index, follow" />
+
+    <!-- Google Search Console Verification -->
+    <meta
+      name="google-site-verification"
+      content="YOUR_GOOGLE_VERIFICATION_CODE"
+    />
+
+    <!-- Bing Webmaster Tools Verification -->
+    <meta name="msvalidate.01" content="YOUR_BING_VERIFICATION_CODE" />
 
     <script is:inline>
       // Theme initialization - runs immediately on page load
-      (() => {
+      ;(() => {
         const getThemePreference = () => {
-          if (typeof localStorage !== "undefined" && localStorage.getItem("theme")) {
+          if (
+            typeof localStorage !== "undefined" &&
+            localStorage.getItem("theme")
+          ) {
             return localStorage.getItem("theme")
           }
           return window.matchMedia("(prefers-color-scheme: dark)").matches
@@ -42,11 +148,11 @@ import { Code, BookOpen, Music, Sun, Moon } from "@thesvg/react"
 
     <script>
       // Handle theme on Astro page transitions
-      document.addEventListener('astro:after-swap', () => {
-        const savedTheme = localStorage.getItem('theme')
+      document.addEventListener("astro:after-swap", () => {
+        const savedTheme = localStorage.getItem("theme")
         if (savedTheme) {
-          const isDark = savedTheme === 'dark'
-          document.documentElement.classList[isDark ? 'add' : 'remove']('dark')
+          const isDark = savedTheme === "dark"
+          document.documentElement.classList[isDark ? "add" : "remove"]("dark")
         }
       })
     </script>
@@ -162,10 +268,9 @@ import { Code, BookOpen, Music, Sun, Moon } from "@thesvg/react"
 
     <!-- 3. FIXED FOOTER -->
     <footer
-      class="z-50 flex shrink-0 justify-between bg-transparent
-      py-4 text-xs text-muted-foreground"
+      class="z-50 flex shrink-0 justify-between bg-transparent py-4 text-xs text-muted-foreground"
     >
-      <p>© 2026 Your Name. Built with Astro & Shadcn.</p>
+      <p>© 2026 @pixlized. Built with Astro & Shadcn.</p>
       <div class="flex gap-4">
         <a href="https://github.com" class="transition hover:text-foreground"
           >GitHub</a

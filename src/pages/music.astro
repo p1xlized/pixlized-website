@@ -8,8 +8,64 @@ import "@/styles/global.css"
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <title>TUI MP3 Player | @pixlized</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" href="/favicon.ico" />
+
+    <!-- SEO Metadata -->
+    <title>Music | @pixlized</title>
+    <meta name="title" content="Music | @pixlized" />
+    <meta
+      name="description"
+      content="Explore music projects and compositions by @pixlized. Interactive TUI-style MP3 player."
+    />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://pixlized.net/music" />
+    <meta property="og:title" content="Music | @pixlized" />
+    <meta
+      property="og:description"
+      content="Explore music projects and compositions by @pixlized. Interactive TUI-style MP3 player."
+    />
+    <meta property="og:image" content="https://pixlized.net/avatar.webp" />
+    <meta property="og:site_name" content="@pixlized" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Music | @pixlized" />
+    <meta
+      name="twitter:description"
+      content="Explore music projects and compositions by @pixlized. Interactive TUI-style MP3 player."
+    />
+    <meta name="twitter:image" content="https://pixlized.net/avatar.webp" />
+    <meta name="twitter:creator" content="@pixlized" />
+    <meta name="twitter:site" content="@pixlized" />
+
+    <!-- Canonical -->
+    <link rel="canonical" href="https://pixlized.net/music" />
+
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "CreativeWork",
+        "name": "Music | @pixlized",
+        "url": "https://pixlized.net/music",
+        "description": "Explore music projects and compositions by @pixlized. Interactive TUI-style MP3 player.",
+        "author": {
+          "@type": "Person",
+          "name": "@pixlized"
+        }
+      }
+    </script>
+
+    <!-- Theme & Robots -->
+    <meta name="theme-color" content="#3b82f6" />
+    <meta name="robots" content="index, follow" />
+
     <script is:inline>
       const getThemePreference = () => {
         if (
@@ -55,12 +111,42 @@ import "@/styles/global.css"
           <span class="tui-corner tr"></span>
         </div>
         <div class="tui-body">
-          <div class="tui-line"><span class="tui-prompt">[</span><span class="tui-loading">■■■■■■■■</span><span class="tui-prompt">]</span> <span class="tui-text">Loading TUI Audio Core...</span></div>
-          <div class="tui-line"><span class="tui-prompt">[</span><span class="tui-loading delay-1">■■■■■■■■</span><span class="tui-prompt">]</span> <span class="tui-text">Initializing Spectrogram...</span></div>
-          <div class="tui-line"><span class="tui-prompt">[</span><span class="tui-loading delay-2">■■■■■■■■</span><span class="tui-prompt">]</span> <span class="tui-text">Mounting Planet Interface...</span></div>
-          <div class="tui-line"><span class="tui-prompt">[</span><span class="tui-loading delay-3">■■■■■■■■</span><span class="tui-prompt">]</span> <span class="tui-text">Establishing Audio Orbit...</span></div>
-          <div class="tui-line"><span class="tui-prompt">[</span><span class="tui-loading delay-4">■■■■■■■■</span><span class="tui-prompt">]</span> <span class="tui-text">Calibrating Visualizers...</span></div>
-          <div class="tui-line"><span class="tui-prompt">[</span><span class="tui-loading delay-5">■■■■■■■■</span><span class="tui-prompt">]</span> <span class="tui-text">System Ready</span></div>
+          <div class="tui-line">
+            <span class="tui-prompt">[</span><span class="tui-loading"
+              >■■■■■■■■</span
+            ><span class="tui-prompt">]</span>
+            <span class="tui-text">Loading TUI Audio Core...</span>
+          </div>
+          <div class="tui-line">
+            <span class="tui-prompt">[</span><span class="tui-loading delay-1"
+              >■■■■■■■■</span
+            ><span class="tui-prompt">]</span>
+            <span class="tui-text">Initializing Spectrogram...</span>
+          </div>
+          <div class="tui-line">
+            <span class="tui-prompt">[</span><span class="tui-loading delay-2"
+              >■■■■■■■■</span
+            ><span class="tui-prompt">]</span>
+            <span class="tui-text">Mounting Planet Interface...</span>
+          </div>
+          <div class="tui-line">
+            <span class="tui-prompt">[</span><span class="tui-loading delay-3"
+              >■■■■■■■■</span
+            ><span class="tui-prompt">]</span>
+            <span class="tui-text">Establishing Audio Orbit...</span>
+          </div>
+          <div class="tui-line">
+            <span class="tui-prompt">[</span><span class="tui-loading delay-4"
+              >■■■■■■■■</span
+            ><span class="tui-prompt">]</span>
+            <span class="tui-text">Calibrating Visualizers...</span>
+          </div>
+          <div class="tui-line">
+            <span class="tui-prompt">[</span><span class="tui-loading delay-5"
+              >■■■■■■■■</span
+            ><span class="tui-prompt">]</span>
+            <span class="tui-text">System Ready</span>
+          </div>
         </div>
         <div class="tui-footer">
           <span class="tui-corner bl"></span>
@@ -75,7 +161,9 @@ import "@/styles/global.css"
     <style>
       /* TUI Kernel Loading Animation */
       #loader {
-        transition: opacity 0.3s ease, visibility 0.3s ease;
+        transition:
+          opacity 0.3s ease,
+          visibility 0.3s ease;
       }
 
       #loader.hidden {
@@ -85,7 +173,7 @@ import "@/styles/global.css"
 
       .tui-terminal {
         width: 320px;
-        font-family: 'IBM Plex Mono', 'JetBrains Mono', monospace;
+        font-family: "IBM Plex Mono", "JetBrains Mono", monospace;
         color: hsl(var(--primary));
         text-shadow: 0 0 5px hsl(var(--primary) / 0.5);
       }
@@ -135,22 +223,44 @@ import "@/styles/global.css"
         display: inline-block;
         width: 60px;
         height: 8px;
-        background: linear-gradient(90deg, hsl(var(--primary)), hsl(var(--primary) / 0.3));
+        background: linear-gradient(
+          90deg,
+          hsl(var(--primary)),
+          hsl(var(--primary) / 0.3)
+        );
         background-size: 200% 100%;
         animation: loading 1.5s ease-in-out infinite;
         clip-path: inset(0 30px 0 0);
       }
 
-      .tui-loading.delay-1 { animation-delay: 0.1s; }
-      .tui-loading.delay-2 { animation-delay: 0.2s; }
-      .tui-loading.delay-3 { animation-delay: 0.3s; }
-      .tui-loading.delay-4 { animation-delay: 0.4s; }
-      .tui-loading.delay-5 { animation-delay: 0.5s; }
+      .tui-loading.delay-1 {
+        animation-delay: 0.1s;
+      }
+      .tui-loading.delay-2 {
+        animation-delay: 0.2s;
+      }
+      .tui-loading.delay-3 {
+        animation-delay: 0.3s;
+      }
+      .tui-loading.delay-4 {
+        animation-delay: 0.4s;
+      }
+      .tui-loading.delay-5 {
+        animation-delay: 0.5s;
+      }
 
       @keyframes loading {
-        0% { background-position: 200% 0; clip-path: inset(0 30px 0 0); }
-        50% { clip-path: inset(0 0 0 0); }
-        100% { background-position: -200% 0; clip-path: inset(0 30px 0 0); }
+        0% {
+          background-position: 200% 0;
+          clip-path: inset(0 30px 0 0);
+        }
+        50% {
+          clip-path: inset(0 0 0 0);
+        }
+        100% {
+          background-position: -200% 0;
+          clip-path: inset(0 30px 0 0);
+        }
       }
 
       .tui-text {
@@ -158,16 +268,34 @@ import "@/styles/global.css"
         animation: fadeIn 0.5s ease-in-out forwards;
       }
 
-      .tui-line:nth-child(1) .tui-text { animation-delay: 0.2s; }
-      .tui-line:nth-child(2) .tui-text { animation-delay: 0.3s; }
-      .tui-line:nth-child(3) .tui-text { animation-delay: 0.4s; }
-      .tui-line:nth-child(4) .tui-text { animation-delay: 0.5s; }
-      .tui-line:nth-child(5) .tui-text { animation-delay: 0.6s; }
-      .tui-line:nth-child(6) .tui-text { animation-delay: 0.7s; }
+      .tui-line:nth-child(1) .tui-text {
+        animation-delay: 0.2s;
+      }
+      .tui-line:nth-child(2) .tui-text {
+        animation-delay: 0.3s;
+      }
+      .tui-line:nth-child(3) .tui-text {
+        animation-delay: 0.4s;
+      }
+      .tui-line:nth-child(4) .tui-text {
+        animation-delay: 0.5s;
+      }
+      .tui-line:nth-child(5) .tui-text {
+        animation-delay: 0.6s;
+      }
+      .tui-line:nth-child(6) .tui-text {
+        animation-delay: 0.7s;
+      }
 
       @keyframes fadeIn {
-        from { opacity: 0; transform: translateX(-10px); }
-        to { opacity: 1; transform: translateX(0); }
+        from {
+          opacity: 0;
+          transform: translateX(-10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateX(0);
+        }
       }
 
       .tui-footer {

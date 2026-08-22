@@ -11,6 +11,10 @@ if (isCloudflare) {
   const cloudflare = await import("@astrojs/cloudflare")
   adapter = cloudflare.default({
     mode: "standalone",
+    // Enable D1 database support
+    platform: {
+      d1: "CF_D1_DB",
+    },
   })
 } else {
   const node = await import("@astrojs/node")

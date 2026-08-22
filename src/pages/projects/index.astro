@@ -59,9 +59,19 @@ function buildUrl(params: Record<string, string | number>): string {
   if (params.page && Number(params.page) > 1) urlParams.set("page", String(params.page))
   return `?${urlParams.toString()}`
 }
+
+// SEO for projects page
+const projectsUrl = "https://pixlized.net/projects"
 ---
 
-<MainLayout>
+<MainLayout
+  title="Projects | @pixlized"
+  description="Explore projects by @pixlized - Web applications, games, and creative experiments."
+  ogTitle="Projects | @pixlized"
+  ogDescription="Explore projects by @pixlized - Web applications, games, and creative experiments."
+  ogUrl={projectsUrl}
+  canonical={projectsUrl}
+>
   <section
     data-label="Projects"
     class="flex min-h-[calc(100vh-140px)] w-full flex-col"

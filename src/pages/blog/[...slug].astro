@@ -25,9 +25,21 @@ if (!post) {
 }
 
 const { Content } = await render(post)
+
+// SEO metadata for individual blog posts
+const postUrl = `https://pixlized.net/blog/${post.id}`
+const postDescription =
+  post.data.description || "Read this blog post by @pixlized"
 ---
 
-<MainLayout>
+<MainLayout
+  title={post.data.title}
+  description={postDescription}
+  ogTitle={post.data.title}
+  ogDescription={postDescription}
+  ogUrl={postUrl}
+  canonical={postUrl}
+>
   <article
     data-label="Article"
     class="mx-auto w-full max-w-2xl py-8 font-sans md:snap-none"
