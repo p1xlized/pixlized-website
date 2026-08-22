@@ -7,6 +7,46 @@ import ContactSection from "@/components/index/ContactSection.astro"
 ---
 
 <MainLayout>
+  <!-- NEW UPDATE STICKER - Desktop only, absolute positioned -->
+  <div
+    id="update-sticker"
+    class="fixed top-4 right-4 z-50 hidden flex-col items-center gap-2 sm:flex"
+  >
+    <div
+      class="relative flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/10 px-3 py-2 text-sm font-medium text-primary backdrop-blur-sm"
+    >
+      <span class="relative flex h-2 w-2">
+        <span
+          class="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75"
+        ></span>
+        <span class="relative inline-flex h-2 w-2 rounded-full bg-primary"
+        ></span>
+      </span>
+      <span>New Update</span>
+      <button
+        onclick="document.getElementById('update-sticker').classList.add('hidden')"
+        class="ml-2 flex h-5 w-5 items-center justify-center rounded-full text-primary/60 transition-colors hover:bg-primary/20 hover:text-primary"
+        aria-label="Close"
+      >
+        <svg
+          viewBox="0 0 24 24"
+          class="h-3.5 w-3.5"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+    <div class="w-0.5 self-end rounded-full bg-primary/30" style="height: 8px;">
+    </div>
+    <div class="w-0 rounded-full bg-primary/20" style="height: 4px;"></div>
+  </div>
+
   <!-- SECTION 1: HERO WITH HEADER -->
   <HeroSection id="overview" />
 

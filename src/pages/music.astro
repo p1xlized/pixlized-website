@@ -43,6 +43,164 @@ import "@/styles/global.css"
   <body
     class="h-full w-full overflow-hidden bg-background font-mono text-foreground antialiased select-none"
   >
+    <!-- TUI Kernel Loading Animation -->
+    <div
+      id="loader"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-background"
+    >
+      <div class="tui-terminal">
+        <div class="tui-header">
+          <span class="tui-corner tl"></span>
+          <span class="tui-title">KERNEL BOOT</span>
+          <span class="tui-corner tr"></span>
+        </div>
+        <div class="tui-body">
+          <div class="tui-line"><span class="tui-prompt">[</span><span class="tui-loading">■■■■■■■■</span><span class="tui-prompt">]</span> <span class="tui-text">Loading TUI Audio Core...</span></div>
+          <div class="tui-line"><span class="tui-prompt">[</span><span class="tui-loading delay-1">■■■■■■■■</span><span class="tui-prompt">]</span> <span class="tui-text">Initializing Spectrogram...</span></div>
+          <div class="tui-line"><span class="tui-prompt">[</span><span class="tui-loading delay-2">■■■■■■■■</span><span class="tui-prompt">]</span> <span class="tui-text">Mounting Planet Interface...</span></div>
+          <div class="tui-line"><span class="tui-prompt">[</span><span class="tui-loading delay-3">■■■■■■■■</span><span class="tui-prompt">]</span> <span class="tui-text">Establishing Audio Orbit...</span></div>
+          <div class="tui-line"><span class="tui-prompt">[</span><span class="tui-loading delay-4">■■■■■■■■</span><span class="tui-prompt">]</span> <span class="tui-text">Calibrating Visualizers...</span></div>
+          <div class="tui-line"><span class="tui-prompt">[</span><span class="tui-loading delay-5">■■■■■■■■</span><span class="tui-prompt">]</span> <span class="tui-text">System Ready</span></div>
+        </div>
+        <div class="tui-footer">
+          <span class="tui-corner bl"></span>
+          <span class="tui-status"></span>
+          <span class="tui-corner br"></span>
+        </div>
+      </div>
+    </div>
+
     <MusicPlayer client:load />
+
+    <style>
+      /* TUI Kernel Loading Animation */
+      #loader {
+        transition: opacity 0.3s ease, visibility 0.3s ease;
+      }
+
+      #loader.hidden {
+        opacity: 0;
+        visibility: hidden;
+      }
+
+      .tui-terminal {
+        width: 320px;
+        font-family: 'IBM Plex Mono', 'JetBrains Mono', monospace;
+        color: hsl(var(--primary));
+        text-shadow: 0 0 5px hsl(var(--primary) / 0.5);
+      }
+
+      .tui-header {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 4px 8px;
+        border-top: 1px solid hsl(var(--primary) / 0.3);
+        border-left: 1px solid hsl(var(--primary) / 0.3);
+        border-right: 1px solid hsl(var(--primary) / 0.3);
+      }
+
+      .tui-title {
+        font-size: 10px;
+        font-weight: bold;
+        letter-spacing: 2px;
+      }
+
+      .tui-corner {
+        font-size: 8px;
+        opacity: 0.6;
+      }
+
+      .tui-body {
+        border-left: 1px solid hsl(var(--primary) / 0.3);
+        border-right: 1px solid hsl(var(--primary) / 0.3);
+        padding: 8px;
+      }
+
+      .tui-line {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 2px 0;
+        font-size: 9px;
+        white-space: nowrap;
+      }
+
+      .tui-prompt {
+        opacity: 0.6;
+      }
+
+      .tui-loading {
+        display: inline-block;
+        width: 60px;
+        height: 8px;
+        background: linear-gradient(90deg, hsl(var(--primary)), hsl(var(--primary) / 0.3));
+        background-size: 200% 100%;
+        animation: loading 1.5s ease-in-out infinite;
+        clip-path: inset(0 30px 0 0);
+      }
+
+      .tui-loading.delay-1 { animation-delay: 0.1s; }
+      .tui-loading.delay-2 { animation-delay: 0.2s; }
+      .tui-loading.delay-3 { animation-delay: 0.3s; }
+      .tui-loading.delay-4 { animation-delay: 0.4s; }
+      .tui-loading.delay-5 { animation-delay: 0.5s; }
+
+      @keyframes loading {
+        0% { background-position: 200% 0; clip-path: inset(0 30px 0 0); }
+        50% { clip-path: inset(0 0 0 0); }
+        100% { background-position: -200% 0; clip-path: inset(0 30px 0 0); }
+      }
+
+      .tui-text {
+        opacity: 0;
+        animation: fadeIn 0.5s ease-in-out forwards;
+      }
+
+      .tui-line:nth-child(1) .tui-text { animation-delay: 0.2s; }
+      .tui-line:nth-child(2) .tui-text { animation-delay: 0.3s; }
+      .tui-line:nth-child(3) .tui-text { animation-delay: 0.4s; }
+      .tui-line:nth-child(4) .tui-text { animation-delay: 0.5s; }
+      .tui-line:nth-child(5) .tui-text { animation-delay: 0.6s; }
+      .tui-line:nth-child(6) .tui-text { animation-delay: 0.7s; }
+
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateX(-10px); }
+        to { opacity: 1; transform: translateX(0); }
+      }
+
+      .tui-footer {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 4px 8px;
+        border-bottom: 1px solid hsl(var(--primary) / 0.3);
+        border-left: 1px solid hsl(var(--primary) / 0.3);
+        border-right: 1px solid hsl(var(--primary) / 0.3);
+      }
+
+      .tui-status {
+        font-size: 8px;
+        opacity: 0.5;
+        min-width: 100px;
+        text-align: center;
+      }
+    </style>
+
+    <script>
+      // Hide loader when MusicPlayer is ready
+      document.addEventListener("DOMContentLoaded", () => {
+        const loader = document.getElementById("loader")
+
+        // Hide loader after animation completes
+        setTimeout(() => {
+          if (loader) {
+            loader.classList.add("hidden")
+          }
+        }, 2500)
+      })
+    </script>
   </body>
 </html>

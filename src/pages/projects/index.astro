@@ -22,6 +22,7 @@ const allProjects = rawProjects.map((row) => ({
   isVideo: row.isVideo === 1,
   isPersonal: row.isPersonal === 1,
   stack: row.stack ? JSON.parse(row.stack) : [],
+  description: row.description,
 }))
 
 const allTags = [
@@ -33,6 +34,7 @@ const filteredProjects = allProjects.filter((project) => {
   const matchesSearch =
     !searchQuery ||
     project.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    project.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     project.stack.some((tech: string) =>
       tech.toLowerCase().includes(searchQuery.toLowerCase())
     )
@@ -74,38 +76,33 @@ function buildUrl(params: Record<string, string | number>): string {
           {filteredProjects.length} projects found
           {searchQuery && ` for "${searchQuery}"`}
           {tagFilter !== "All" && ` in ${tagFilter}`}
-          {totalPages > 1 && ` (Page ${currentPage} of ${totalPages})`}
         </p>
       </div>
 
-      <!-- FILTER AND PAGINATION CONTROLS - Centered Together -->
+      <!-- FILTER CONTROLS - At the top -->
       <div class="mb-6 flex flex-col items-center justify-center gap-4">
-        <!-- Search -->
-        <form method="GET" class="w-full max-w-md">
-          <div class="relative">
-            <svg
-              class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-            </svg>
-            <input
-              type="text"
-              name="q"
-              value={searchQuery}
-              placeholder="Search projects..."
-              class="w-full rounded-lg border border-border bg-background px-3 py-2 pl-10 text-sm placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
-            />
-            <input type="hidden" name="tag" value={tagFilter} />
-            <input type="hidden" name="page" value="1" />
-          </div>
-        </form>
+        <!-- Search Input - Real-time filtering -->
+        <div class="relative w-full max-w-md">
+          <svg
+            class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+          </svg>
+          <input
+            id="search-input"
+            type="text"
+            value={searchQuery}
+            placeholder="Search projects..."
+            class="w-full rounded-lg border border-border bg-background px-3 py-2 pl-10 text-sm placeholder:text-muted-foreground transition-all focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
+          />
+        </div>
 
         <!-- Tag Filters -->
         <div class="flex flex-wrap justify-center gap-2">
@@ -129,73 +126,22 @@ function buildUrl(params: Record<string, string | number>): string {
             })
           }
         </div>
-
-        <!-- Pagination -->
-        {totalPages > 1 && (
-          <div class="flex items-center justify-center gap-2">
-            {currentPage > 1 && (
-              <a
-                href={buildUrl({ q: searchQuery, tag: tagFilter, page: currentPage - 1 })}
-                class="flex items-center gap-1 rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-secondary/30 hover:border-primary/40"
-              >
-                <svg viewBox="0 0 24 24" class="h-3 w-3" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M15 18l-6-6 6-6"/>
-                </svg>
-                <span>Prev</span>
-              </a>
-            )}
-
-            <div class="flex items-center gap-1">
-              {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-                const page = Math.max(1, currentPage - 2) + i
-                if (page > totalPages) return null
-                return (
-                  <a
-                    href={buildUrl({ q: searchQuery, tag: tagFilter, page })}
-                    class:list={[
-                      "flex h-6 w-6 items-center justify-center rounded-lg border text-xs font-medium transition-colors",
-                      page === currentPage
-                        ? "border-primary bg-primary text-primary-foreground"
-                        : "border-border bg-background text-muted-foreground hover:border-primary/40 hover:text-foreground"
-                    ]}
-                  >
-                    {page}
-                  </a>
-                )
-              })}
-            </div>
-
-            {currentPage < totalPages && (
-              <a
-                href={buildUrl({ q: searchQuery, tag: tagFilter, page: currentPage + 1 })}
-                class="flex items-center gap-1 rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-secondary/30 hover:border-primary/40"
-              >
-                <span>Next</span>
-                <svg viewBox="0 0 24 24" class="h-3 w-3" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M9 18l6-6-6-6"/>
-                </svg>
-              </a>
-            )}
-          </div>
-        )}
       </div>
 
-      <!-- PROJECTS GRID - Centered with organic spacing -->
-      <div
-        class="flex h-full min-h-0 w-full flex-1 grow items-center justify-center"
-      >
+      <!-- PROJECTS GRID - Always at top, perfectly centered -->
+      <div class="flex w-full flex-1 flex-col items-center justify-start">
         {
           filteredProjects.length === 0 ? (
-            <div class="flex h-full w-full items-center justify-center rounded-lg border border-dashed border-border text-center">
+            <div class="flex h-64 w-full items-center justify-center rounded-lg border border-dashed border-border text-center">
               <p class="font-mono text-xs text-muted-foreground">
                 NO PROJECTS FOUND
               </p>
             </div>
           ) : (
             <div class="w-full max-w-7xl px-2 sm:px-4">
-              <div class="grid w-full grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:justify-items-center">
+              <div class="grid w-full grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 place-items-center">
                 {paginatedProjects.map((project) => (
-                  <div class="w-full justify-self-center">
+                  <div class="w-full max-w-sm" key={project.id}>
                     <ProjectCard project={project} />
                   </div>
                 ))}
@@ -204,6 +150,85 @@ function buildUrl(params: Record<string, string | number>): string {
           )
         }
       </div>
+
+      <!-- PAGINATION - At the bottom with Lucide arrow icons -->
+      {totalPages > 1 && (
+        <div class="mt-6 flex items-center justify-center">
+          <div class="flex items-center justify-center gap-2">
+            <a
+              href={buildUrl({ q: searchQuery, tag: tagFilter, page: currentPage - 1 })}
+              class:list={[
+                "flex h-8 w-8 items-center justify-center rounded-lg border transition-colors",
+                currentPage <= 1
+                  ? "border-border/50 bg-background/50 text-muted-foreground/50 cursor-not-allowed opacity-50"
+                  : "border-border bg-background text-foreground hover:border-primary/40 hover:bg-secondary/30"
+              ]}
+              aria-label="Previous page"
+            >
+              <!-- Lucide Chevron Left -->
+              <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+              </svg>
+            </a>
+
+            <span class="font-mono text-xs text-muted-foreground px-2">
+              {currentPage} / {totalPages}
+            </span>
+
+            <a
+              href={buildUrl({ q: searchQuery, tag: tagFilter, page: currentPage + 1 })}
+              class:list={[
+                "flex h-8 w-8 items-center justify-center rounded-lg border transition-colors",
+                currentPage >= totalPages
+                  ? "border-border/50 bg-background/50 text-muted-foreground/50 cursor-not-allowed opacity-50"
+                  : "border-border bg-background text-foreground hover:border-primary/40 hover:bg-secondary/30"
+              ]}
+              aria-label="Next page"
+            >
+              <!-- Lucide Chevron Right -->
+              <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+              </svg>
+            </a>
+          </div>
+        </div>
+      )}
     </div>
   </section>
+
+  <!-- Client-side real-time search with Astro transitions support -->
+  <script>
+    (() => {
+      const searchInput = document.getElementById('search-input')
+      const currentTag = new URLSearchParams(window.location.search).get('tag') || 'All'
+      const currentQuery = new URLSearchParams(window.location.search).get('q') || ''
+
+      if (searchInput) {
+        // Set initial value
+        searchInput.value = currentQuery
+
+        // Debounce function
+        let timeout: ReturnType<typeof setTimeout>
+
+        searchInput.addEventListener('input', (e) => {
+          clearTimeout(timeout)
+          timeout = setTimeout(() => {
+            const value = (e.target as HTMLInputElement).value
+            const url = new URL(window.location.href)
+            url.searchParams.set('q', value)
+            url.searchParams.set('tag', currentTag)
+            url.searchParams.set('page', '1')
+
+            // Use Astro's client-side navigation if available
+            if (typeof window !== 'undefined' && window.astroNavigate) {
+              window.astroNavigate(url.toString(), { history: 'push' })
+            } else {
+              // Fallback to regular navigation
+              window.location.href = url.toString()
+            }
+          }, 300) // 300ms debounce
+        })
+      }
+    })()
+  </script>
 </MainLayout>
