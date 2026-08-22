@@ -1,0 +1,183 @@
+---
+import MainLayout from "@/layouts/main.astro"
+import { db } from "@/db/db"
+---
+
+<MainLayout>
+  <section
+    class="flex h-full w-full flex-col items-center justify-start px-4 py-12"
+  >
+    <div class="w-full max-w-4xl space-y-8">
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-3xl font-bold tracking-tight">Admin Dashboard</h1>
+          <p class="mt-1 text-sm text-muted-foreground">Manage your content</p>
+        </div>
+        <a
+          href="/admin/logout"
+          class="rounded-sm border border-border bg-secondary/50 px-3 py-1.5 font-mono text-xs font-bold tracking-wider uppercase transition-colors hover:bg-secondary/80"
+        >
+          Logout
+        </a>
+      </div>
+
+      <!-- Quick Stats -->
+      <div class="grid grid-cols-2 gap-4 md:grid-cols-4">
+        <div class="rounded-sm border border-border bg-card p-4 text-center">
+          <div class="text-2xl font-bold">
+            {db.prepare("SELECT COUNT(*) as count FROM projects").get().count}
+          </div>
+          <div
+            class="font-mono text-[10px] tracking-wider text-muted-foreground uppercase"
+          >
+            Projects
+          </div>
+        </div>
+        <div class="rounded-sm border border-border bg-card p-4 text-center">
+          <div class="text-2xl font-bold">
+            {
+              db
+                .prepare(
+                  "SELECT COUNT(*) as count FROM projects WHERE isFeatured = 1"
+                )
+                .get().count
+            }
+          </div>
+          <div
+            class="font-mono text-[10px] tracking-wider text-muted-foreground uppercase"
+          >
+            Featured
+          </div>
+        </div>
+        <a
+          href="/admin/music"
+          class="rounded-sm border border-border bg-card p-4 text-center transition-colors hover:bg-secondary/50"
+        >
+          <div class="text-2xl font-bold">
+            {
+              db.prepare("SELECT COUNT(*) as count FROM music_tracks").get()
+                .count
+            }
+          </div>
+          <div
+            class="font-mono text-[10px] tracking-wider text-muted-foreground uppercase"
+          >
+            Tracks
+          </div>
+        </a>
+        <a
+          href="/admin/albums"
+          class="rounded-sm border border-border bg-card p-4 text-center transition-colors hover:bg-secondary/50"
+        >
+          <div class="text-2xl font-bold">
+            {db.prepare("SELECT COUNT(*) as count FROM albums").get().count}
+          </div>
+          <div
+            class="font-mono text-[10px] tracking-wider text-muted-foreground uppercase"
+          >
+            Albums
+          </div>
+        </a>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="space-y-4 rounded-sm border border-border bg-card p-6">
+        <h2 class="font-mono text-sm font-bold tracking-tight uppercase">
+          Quick Actions
+        </h2>
+        <div class="flex flex-wrap gap-2">
+          <a
+            href="/admin/projects/new"
+            class="rounded-sm border border-border bg-secondary/50 px-3 py-1.5 font-mono text-xs tracking-wider transition-colors hover:bg-secondary/80"
+          >
+            + New Project
+          </a>
+          <a
+            href="/admin/music/new"
+            class="rounded-sm border border-border bg-secondary/50 px-3 py-1.5 font-mono text-xs tracking-wider transition-colors hover:bg-secondary/80"
+          >
+            + New Track
+          </a>
+          <a
+            href="/admin/albums/new"
+            class="rounded-sm border border-border bg-secondary/50 px-3 py-1.5 font-mono text-xs tracking-wider transition-colors hover:bg-secondary/80"
+          >
+            + New Album
+          </a>
+          <a
+            href="/admin/music"
+            class="rounded-sm border border-border bg-secondary/50 px-3 py-1.5 font-mono text-xs tracking-wider transition-colors hover:bg-secondary/80"
+          >
+            Manage Music
+          </a>
+          <a
+            href="/admin/blog/new"
+            class="rounded-sm border border-border bg-secondary/50 px-3 py-1.5 font-mono text-xs tracking-wider transition-colors hover:bg-secondary/80"
+          >
+            + New Post
+          </a>
+        </div>
+      </div>
+
+      <!-- Recent Projects -->
+      <div class="space-y-4 rounded-sm border border-border bg-card p-6">
+        <h2 class="font-mono text-sm font-bold tracking-tight uppercase">
+          Recent Projects
+        </h2>
+        <div class="space-y-2">
+          {
+            db
+              .prepare(
+                `SELECT * FROM projects ORDER BY releasedAt DESC LIMIT 5`
+              )
+              .all()
+              .map((project: any) => (
+                <div class="flex items-center justify-between rounded-sm p-2 transition-colors hover:bg-secondary/50">
+                  <div class="flex items-center gap-3">
+                    <img
+                      src={project.cover}
+                      alt={project.title}
+                      class="h-8 w-8 rounded-sm object-cover"
+                    />
+                    <div>
+                      <div class="text-sm font-semibold">{project.title}</div>
+                      <div class="font-mono text-[10px] text-muted-foreground">
+                        {project.date}
+                      </div>
+                    </div>
+                  </div>
+                  <div class="flex gap-2">
+                    <a
+                      href={`/admin/projects/${project.id}/edit`}
+                      class="font-mono text-[10px] tracking-wider text-muted-foreground uppercase hover:text-primary"
+                    >
+                      Edit
+                    </a>
+                    <a
+                      href={`/projects/${project.id}`}
+                      class="font-mono text-[10px] tracking-wider text-muted-foreground uppercase hover:text-primary"
+                    >
+                      View
+                    </a>
+                  </div>
+                </div>
+              ))
+          }
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    // Check auth on page load
+    document.addEventListener("DOMContentLoaded", () => {
+      const isLoggedIn =
+        sessionStorage.getItem("admin_logged_in") ||
+        localStorage.getItem("admin_token")
+
+      if (!isLoggedIn) {
+        window.location.href = "/admin"
+      }
+    })
+  </script>
+</MainLayout>

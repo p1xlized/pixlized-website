@@ -1,0 +1,209 @@
+---
+import MainLayout from "../../layouts/main.astro"
+import { db } from "../../db/db"
+import ProjectCard from "../../components/Projects/ProjectCard.astro"
+import "@/styles/global.css"
+
+const url = Astro.url
+const searchParams = new URLSearchParams(url.search)
+const searchQuery = searchParams.get("q") || ""
+const tagFilter = searchParams.get("tag") || "All"
+
+const rawProjects = db
+  .prepare("SELECT * FROM projects ORDER BY releasedAt DESC")
+  .all() as any[]
+
+const allProjects = rawProjects.map((row) => ({
+  id: row.id,
+  title: row.title,
+  date: row.date,
+  tag: row.tag as "MOBILE" | "WEB" | "GAME",
+  cover: row.cover,
+  isVideo: row.isVideo === 1,
+  isPersonal: row.isPersonal === 1,
+  stack: row.stack ? JSON.parse(row.stack) : [],
+}))
+
+const allTags = [
+  "All",
+  ...new Set(allProjects.map((p) => p.tag).filter(Boolean)),
+]
+
+const filteredProjects = allProjects.filter((project) => {
+  const matchesSearch =
+    !searchQuery ||
+    project.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    project.stack.some((tech: string) =>
+      tech.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+  const matchesTag = tagFilter === "All" || project.tag === tagFilter
+  return matchesSearch && matchesTag
+})
+
+// Pagination - 6 projects per page
+const projectsPerPage = 6
+const currentPage = Number(searchParams.get("page") || "1")
+const totalPages = Math.ceil(filteredProjects.length / projectsPerPage)
+const paginatedProjects = filteredProjects.slice(
+  (currentPage - 1) * projectsPerPage,
+  currentPage * projectsPerPage
+)
+
+// Build URL with query parameters
+function buildUrl(params: Record<string, string | number>): string {
+  const urlParams = new URLSearchParams()
+  if (params.q) urlParams.set("q", String(params.q))
+  if (params.tag && params.tag !== "All") urlParams.set("tag", String(params.tag))
+  if (params.page && Number(params.page) > 1) urlParams.set("page", String(params.page))
+  return `?${urlParams.toString()}`
+}
+---
+
+<MainLayout>
+  <section
+    data-label="Projects"
+    class="flex min-h-[calc(100vh-140px)] w-full flex-col"
+  >
+    <div
+      class="mx-auto flex w-full max-w-7xl flex-1 flex-col overflow-y-auto px-4 py-4 sm:px-6 lg:px-8"
+    >
+      <!-- HEADER -->
+      <div class="mb-4 text-center">
+        <h1 class="text-2xl font-black tracking-tight">Projects</h1>
+        <p class="mt-2 font-mono text-xs text-muted-foreground">
+          {filteredProjects.length} projects found
+          {searchQuery && ` for "${searchQuery}"`}
+          {tagFilter !== "All" && ` in ${tagFilter}`}
+          {totalPages > 1 && ` (Page ${currentPage} of ${totalPages})`}
+        </p>
+      </div>
+
+      <!-- FILTER AND PAGINATION CONTROLS - Centered Together -->
+      <div class="mb-6 flex flex-col items-center justify-center gap-4">
+        <!-- Search -->
+        <form method="GET" class="w-full max-w-md">
+          <div class="relative">
+            <svg
+              class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+            </svg>
+            <input
+              type="text"
+              name="q"
+              value={searchQuery}
+              placeholder="Search projects..."
+              class="w-full rounded-lg border border-border bg-background px-3 py-2 pl-10 text-sm placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
+            />
+            <input type="hidden" name="tag" value={tagFilter} />
+            <input type="hidden" name="page" value="1" />
+          </div>
+        </form>
+
+        <!-- Tag Filters -->
+        <div class="flex flex-wrap justify-center gap-2">
+          {
+            allTags.map((tag) => {
+              const isActive = tag === tagFilter
+              const href = buildUrl({ q: searchQuery, tag, page: 1 })
+              return (
+                <a
+                  href={href}
+                  class:list={[
+                    "rounded-lg border px-3 py-1 text-xs font-medium transition-colors",
+                    isActive
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-border bg-background text-muted-foreground hover:border-primary/40 hover:text-foreground",
+                  ]}
+                >
+                  {tag}
+                </a>
+              )
+            })
+          }
+        </div>
+
+        <!-- Pagination -->
+        {totalPages > 1 && (
+          <div class="flex items-center justify-center gap-2">
+            {currentPage > 1 && (
+              <a
+                href={buildUrl({ q: searchQuery, tag: tagFilter, page: currentPage - 1 })}
+                class="flex items-center gap-1 rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-secondary/30 hover:border-primary/40"
+              >
+                <svg viewBox="0 0 24 24" class="h-3 w-3" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M15 18l-6-6 6-6"/>
+                </svg>
+                <span>Prev</span>
+              </a>
+            )}
+
+            <div class="flex items-center gap-1">
+              {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                const page = Math.max(1, currentPage - 2) + i
+                if (page > totalPages) return null
+                return (
+                  <a
+                    href={buildUrl({ q: searchQuery, tag: tagFilter, page })}
+                    class:list={[
+                      "flex h-6 w-6 items-center justify-center rounded-lg border text-xs font-medium transition-colors",
+                      page === currentPage
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-border bg-background text-muted-foreground hover:border-primary/40 hover:text-foreground"
+                    ]}
+                  >
+                    {page}
+                  </a>
+                )
+              })}
+            </div>
+
+            {currentPage < totalPages && (
+              <a
+                href={buildUrl({ q: searchQuery, tag: tagFilter, page: currentPage + 1 })}
+                class="flex items-center gap-1 rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-secondary/30 hover:border-primary/40"
+              >
+                <span>Next</span>
+                <svg viewBox="0 0 24 24" class="h-3 w-3" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M9 18l6-6-6-6"/>
+                </svg>
+              </a>
+            )}
+          </div>
+        )}
+      </div>
+
+      <!-- PROJECTS GRID - Centered with organic spacing -->
+      <div
+        class="flex h-full min-h-0 w-full flex-1 grow items-center justify-center"
+      >
+        {
+          filteredProjects.length === 0 ? (
+            <div class="flex h-full w-full items-center justify-center rounded-lg border border-dashed border-border text-center">
+              <p class="font-mono text-xs text-muted-foreground">
+                NO PROJECTS FOUND
+              </p>
+            </div>
+          ) : (
+            <div class="w-full max-w-7xl px-2 sm:px-4">
+              <div class="grid w-full grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:justify-items-center">
+                {paginatedProjects.map((project) => (
+                  <div class="w-full justify-self-center">
+                    <ProjectCard project={project} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )
+        }
+      </div>
+    </div>
+  </section>
+</MainLayout>

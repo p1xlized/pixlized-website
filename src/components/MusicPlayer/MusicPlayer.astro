@@ -1,0 +1,70 @@
+---
+import { db } from "@/db/db"
+import MusicPlayerComponent from './MusicPlayer';
+
+// Fetch data from database
+const rawAlbums = db
+  .prepare("SELECT * FROM albums ORDER BY createdAt DESC")
+  .all() as any[]
+
+const rawTracks = db
+  .prepare("SELECT * FROM music_tracks ORDER BY albumId, id")
+  .all() as any[]
+
+// Organize data
+const albumMap = new Map<number, any>()
+const allTracks: any[] = []
+
+rawAlbums.forEach((a) => albumMap.set(a.id, { ...a, tracks: [] }))
+rawTracks.forEach((t) => {
+  const album = albumMap.get(t.albumId)
+  if (album) {
+    album.tracks.push({
+      id: t.id,
+      title: t.title,
+      genre: t.genre,
+      duration: t.duration,
+      bpm: t.bpm,
+      file: t.file,
+    })
+  }
+  allTracks.push({
+    id: t.id,
+    title: t.title,
+    genre: t.genre,
+    duration: t.duration,
+    bpm: t.bpm,
+    file: t.file,
+    albumId: t.albumId,
+  })
+})
+
+const albums = Array.from(albumMap.values())
+---
+
+<!-- Client-side hydration -->
+<MusicPlayerComponent
+  client:load
+  albums={albums}
+  tracks={allTracks}
+/>
+
+<!-- Styles -->
+<style is:global>
+  .custom-scroll::-webkit-scrollbar {
+    width: 4px;
+  }
+  .custom-scroll::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.6);
+  }
+  .custom-scroll::-webkit-scrollbar-thumb {
+    background: hsl(var(--primary));
+  }
+  .cyber-btn {
+    box-shadow: 0 0 5px rgba(6, 182, 212, 0.2);
+    text-shadow: 0 0 5px rgba(6, 182, 212, 0.6);
+  }
+  .cyber-btn:hover:not(:disabled) {
+    box-shadow: 0 0 10px rgba(6, 182, 212, 0.6);
+  }
+</style>

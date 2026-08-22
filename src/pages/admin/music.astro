@@ -1,0 +1,263 @@
+---
+import MainLayout from "@/layouts/main.astro"
+import { db } from "@/db/db"
+
+// Get all tracks with their albums
+const tracks = db.prepare(`
+  SELECT mt.*, a.title as albumTitle, a.id as albumId
+  FROM music_tracks mt
+  LEFT JOIN albums a ON mt.albumId = a.id
+  ORDER BY mt.albumId, mt.id
+`).all() as any[]
+
+const albums = db.prepare("SELECT * FROM albums ORDER BY title ASC").all() as any[]
+---
+
+<MainLayout>
+  <section class="flex h-full w-full flex-col items-center justify-start py-12 px-4">
+    <div class="w-full max-w-4xl space-y-6">
+      <!-- Header -->
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-2xl font-bold tracking-tight">
+            <span class="font-mono text-[hsl(var(--chart-2))]">🎵</span> Music Library
+          </h1>
+          <p class="mt-1 text-sm text-muted-foreground">
+            Manage your music tracks and albums
+          </p>
+        </div>
+        <div class="flex gap-2">
+          <a
+            href="/admin/dashboard"
+            class="rounded-sm border border-border bg-secondary/50 px-3 py-1.5 font-mono text-xs font-bold tracking-wider uppercase transition-colors hover:bg-secondary/80"
+          >
+            Dashboard
+          </a>
+          <a
+            href="/admin/music/new"
+            class="rounded-sm border border-[hsl(var(--chart-2))] bg-[hsl(var(--chart-2))] px-3 py-1.5 font-mono text-xs font-bold tracking-wider uppercase transition-colors hover:bg-[hsl(var(--chart-2))]/90 text-white"
+          >
+            + Add Track
+          </a>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="rounded-sm border border-border bg-card p-4 text-center">
+          <div class="text-2xl font-bold">{tracks.length}</div>
+          <div class="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+            Total Tracks
+          </div>
+        </div>
+        <div class="rounded-sm border border-border bg-card p-4 text-center">
+          <div class="text-2xl font-bold">{albums.length}</div>
+          <div class="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+            Albums
+          </div>
+        </div>
+        <div class="rounded-sm border border-border bg-card p-4 text-center">
+          <div class="text-2xl font-bold">
+            {db.prepare("SELECT COUNT(*) as count FROM music_tracks WHERE bpm IS NOT NULL").get().count}
+          </div>
+          <div class="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+            With BPM
+          </div>
+        </div>
+        <div class="rounded-sm border border-border bg-card p-4 text-center">
+          <div class="text-2xl font-bold">
+            {db.prepare("SELECT COUNT(DISTINCT genre) as count FROM music_tracks").get().count}
+          </div>
+          <div class="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+            Genres
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="rounded-sm border border-border bg-card p-6 space-y-4">
+        <h2 class="font-mono text-sm font-bold tracking-tight uppercase">
+          Quick Actions
+        </h2>
+        <div class="flex flex-wrap gap-2">
+          <a
+            href="/admin/music/new"
+            class="rounded-sm border border-border bg-secondary/50 px-3 py-1.5 font-mono text-xs tracking-wider transition-colors hover:bg-secondary/80"
+          >
+            + New Track
+          </a>
+          <a
+            href="/admin/albums/new"
+            class="rounded-sm border border-border bg-secondary/50 px-3 py-1.5 font-mono text-xs tracking-wider transition-colors hover:bg-secondary/80"
+          >
+            + New Album
+          </a>
+          <a
+            href="/admin/albums"
+            class="rounded-sm border border-border bg-secondary/50 px-3 py-1.5 font-mono text-xs tracking-wider transition-colors hover:bg-secondary/80"
+          >
+            Manage Albums
+          </a>
+        </div>
+      </div>
+
+      <!-- Tracks List -->
+      <div class="rounded-sm border border-border bg-card p-6 space-y-4">
+        <div class="flex items-center justify-between">
+          <h2 class="font-mono text-sm font-bold tracking-tight uppercase">
+            All Tracks
+          </h2>
+          <span class="font-mono text-[10px] text-muted-foreground">
+            [{tracks.length} total]
+          </span>
+        </div>
+
+        <div class="space-y-2">
+          {tracks.map((track, index) => (
+            <div
+              key={track.id}
+              class="flex items-center justify-between p-3 rounded-sm border border-border/40 hover:bg-secondary/50 transition-colors"
+            >
+              <div class="flex items-center gap-3 flex-1 min-w-0">
+                <span class="font-mono text-[10px] text-muted-foreground/60 w-6 text-right">
+                  {index + 1}.
+                </span>
+                <div class="flex-1 min-w-0">
+                  <div class="font-semibold text-sm truncate">{track.title}</div>
+                  <div class="flex items-center gap-2 font-mono text-[10px] text-muted-foreground/80">
+                    <span>{track.genre}</span>
+                    <span>•</span>
+                    <span>{track.duration}</span>
+                    {track.bpm && <><span>•</span><span>{track.bpm} BPM</span></>}
+                  </div>
+                </div>
+              </div>
+              <div class="flex items-center gap-3">
+                <span class="rounded-xs border border-border/40 bg-secondary/80 px-2 font-mono text-[9px] text-muted-foreground">
+                  {track.albumTitle || 'No Album'}
+                </span>
+                <div class="flex gap-1">
+                  <button
+                    onclick={`confirmDelete(${track.id}, '${track.title}')`}
+                    class="font-mono text-[10px] uppercase tracking-wider text-red-400/80 hover:text-red-400"
+                  >
+                    Del
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Delete Confirmation Modal -->
+  <div
+    id="delete-modal"
+    class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+  >
+    <div class="rounded-xl border border-border bg-background p-6 shadow-2xl max-w-md w-full">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-bold">Delete Track</h3>
+        <button
+          id="close-delete-modal"
+          class="rounded-lg border border-input bg-background p-1.5 hover:bg-accent hover:text-accent-foreground"
+          aria-label="Close"
+        >
+          <span class="font-mono text-xl">✕</span>
+        </button>
+      </div>
+      <div class="space-y-4">
+        <p id="delete-message" class="text-muted-foreground">
+          Are you sure you want to delete this track?
+        </p>
+        <div class="flex gap-3 justify-end">
+          <button
+            id="cancel-delete"
+            class="rounded-sm border border-border bg-secondary/50 px-4 py-2 font-mono text-xs font-bold tracking-wider uppercase transition-colors hover:bg-secondary/80"
+          >
+            Cancel
+          </button>
+          <button
+            id="confirm-delete-btn"
+            class="rounded-sm bg-red-500/20 border border-red-500/30 px-4 py-2 font-mono text-xs font-bold tracking-wider uppercase transition-colors hover:bg-red-500/30 text-red-400"
+          >
+            Delete
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Check auth
+    document.addEventListener('DOMContentLoaded', () => {
+      const isLoggedIn = sessionStorage.getItem('admin_logged_in') ||
+                        localStorage.getItem('admin_token')
+      if (!isLoggedIn) {
+        window.location.href = '/admin'
+      }
+
+      // Delete modal handling
+      const deleteModal = document.getElementById('delete-modal')
+      const closeBtn = document.getElementById('close-delete-modal')
+      const cancelBtn = document.getElementById('cancel-delete')
+      const confirmBtn = document.getElementById('confirm-delete-btn')
+      const deleteMessage = document.getElementById('delete-message')
+
+      let trackToDelete: number | null = null
+
+      function confirmDelete(id: number, title: string) {
+        trackToDelete = id
+        if (deleteMessage) deleteMessage.textContent = `Delete "${title}"? This cannot be undone.`
+        if (deleteModal) {
+          deleteModal.classList.remove('hidden')
+          deleteModal.classList.add('flex')
+        }
+      }
+
+      function closeModal() {
+        if (deleteModal) {
+          deleteModal.classList.add('hidden')
+          deleteModal.classList.remove('flex')
+        }
+        trackToDelete = null
+      }
+
+      if (closeBtn) closeBtn.onclick = closeModal
+      if (cancelBtn) cancelBtn.onclick = closeModal
+
+      if (confirmBtn) {
+        confirmBtn.onclick = async () => {
+          if (!trackToDelete) return
+
+          try {
+            const response = await fetch(`/api/admin/music?id=${trackToDelete}`, {
+              method: 'DELETE',
+              headers: {
+                'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
+              }
+            })
+
+            if (response.ok) {
+              closeModal()
+              window.location.reload()
+            } else {
+              alert('Failed to delete track')
+            }
+          } catch (err) {
+            alert('Network error. Please try again.')
+          }
+        }
+      }
+
+      // Close modal on outside click
+      if (deleteModal) {
+        deleteModal.onclick = (e) => {
+          if (e.target === deleteModal) closeModal()
+        }
+      }
+    })
+  </script>
+</MainLayout>

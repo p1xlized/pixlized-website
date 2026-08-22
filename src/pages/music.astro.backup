@@ -1,0 +1,789 @@
+---
+import { db } from "@/db/db"
+import "@/styles/global.css"
+
+// Direct database queries
+const rawAlbums = db
+  .prepare("SELECT * FROM albums ORDER BY createdAt DESC")
+  .all() as any[]
+
+const rawTracks = db
+  .prepare("SELECT * FROM music_tracks ORDER BY albumId, id")
+  .all() as any[]
+
+// Efficient single-pass mapping
+const albumMap = new Map<number, any>()
+const allTracks: any[] = []
+
+rawAlbums.forEach((a) => albumMap.set(a.id, { ...a, tracks: [] }))
+
+rawTracks.forEach((t) => {
+  const album = albumMap.get(t.albumId)
+  if (album) {
+    album.tracks.push({
+      id: t.id,
+      title: t.title,
+      genre: t.genre,
+      duration: t.duration,
+      bpm: t.bpm,
+      file: t.file,
+    })
+  }
+  allTracks.push({
+    id: t.id,
+    title: t.title,
+    genre: t.genre,
+    duration: t.duration,
+    bpm: t.bpm,
+    file: t.file,
+    albumId: t.albumId,
+  })
+})
+
+const albums = Array.from(albumMap.values())
+
+// Add test covers from imgs directory
+const covers = ["/assets/imgs/bitwig-1.jpg", "/assets/imgs/bitwig-2.jpg"]
+const albumsWithCovers = albums.map((album, index) => ({
+  ...album,
+  cover: covers[index % covers.length],
+}))
+
+// Box drawing characters
+const box = {
+  tl: "\u250c",
+  tr: "\u2510",
+  bl: "\u2514",
+  br: "\u2518",
+  h: "\u2500",
+  v: "\u2502",
+  lt: "\u251c",
+  rt: "\u2524",
+  tt: "\u252c",
+  bb: "\u2534",
+  cross: "\u253c",
+}
+
+// Serialize for client-side - use JSON.stringify directly
+const serializedAlbums = JSON.stringify(albumsWithCovers)
+const serializedTracks = JSON.stringify(allTracks)
+const serializedBox = JSON.stringify(box)
+---
+
+<!doctype html>
+<html lang="en" class="h-full">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>TUI MP3 Player | @pixlized</title>
+
+    <!-- Theme initialization -->
+    <script is:inline>
+      ;(() => {
+        const getThemePreference = () => {
+          if (
+            typeof localStorage !== "undefined" &&
+            localStorage.getItem("theme")
+          ) {
+            return localStorage.getItem("theme")
+          }
+          return window.matchMedia("(prefers-color-scheme: dark)").matches
+            ? "dark"
+            : "light"
+        }
+        const isDark = getThemePreference() === "dark"
+        document.documentElement.classList[isDark ? "add" : "remove"]("dark")
+        if (typeof localStorage !== "undefined") {
+          const observer = new MutationObserver(() => {
+            localStorage.setItem(
+              "theme",
+              document.documentElement.classList.contains("dark")
+                ? "dark"
+                : "light"
+            )
+          })
+          observer.observe(document.documentElement, {
+            attributes: true,
+            attributeFilter: ["class"],
+          })
+        }
+      })()
+    </script>
+
+    <!-- Preload covers for better performance -->
+    <link rel="preload" href="/assets/imgs/bitwig-1.jpg" as="image" />
+    <link rel="preload" href="/assets/imgs/bitwig-2.jpg" as="image" />
+  </head>
+  <body
+    class="h-full w-full overflow-hidden bg-background font-mono text-foreground antialiased select-none"
+  >
+    <script>
+      // Use template literals with Astro interpolation
+      const albums = JSON.parse(`${serializedAlbums}`)
+      const allTracks = JSON.parse(`${serializedTracks}`)
+      const box = JSON.parse(`${serializedBox}`)
+
+      const state = {
+        albums: albums,
+        allTracks: allTracks,
+        currentAlbumIdx: -1,
+        currentTrackIdx: -1,
+        audio: null,
+        isPlaying: false,
+        audioCtx: null,
+        analyser: null,
+        dataArray: null,
+        animFrameId: null,
+        mirrorMode: true,
+      }
+
+      const elements = {}
+
+      function formatTime(secs) {
+        if (isNaN(secs)) return "00:00"
+        const m = Math.floor(secs / 60)
+        const s = Math.floor(secs % 60)
+        return `${m < 10 ? "0" + m : m}:${s < 10 ? "0" + s : s}`
+      }
+
+      function getElement(id) {
+        if (!elements[id]) elements[id] = document.getElementById(id)
+        return elements[id]
+      }
+
+      function debounce(func, wait) {
+        let timeout
+        return function (...args) {
+          clearTimeout(timeout)
+          timeout = setTimeout(() => func(...args), wait)
+        }
+      }
+
+      function setupWebAudio() {
+        if (!state.audioCtx) {
+          state.audioCtx = new (
+            window.AudioContext || window.webkitAudioContext
+          )()
+          state.analyser = state.audioCtx.createAnalyser()
+          state.analyser.fftSize = 128
+          const source = state.audioCtx.createMediaElementSource(state.audio)
+          source.connect(state.analyser)
+          state.analyser.connect(state.audioCtx.destination)
+          state.dataArray = new Uint8Array(state.analyser.frequencyBinCount)
+        }
+      }
+
+      function cleanup() {
+        if (state.audio) {
+          state.audio.pause()
+          state.audio = null
+        }
+        if (state.animFrameId) {
+          cancelAnimationFrame(state.animFrameId)
+          state.animFrameId = null
+        }
+      }
+
+      function playTrack(track) {
+        cleanup()
+        state.audio = new Audio(track.file)
+        state.audio.crossOrigin = "anonymous"
+        state.audio.addEventListener("loadedmetadata", () => {
+          getElement("timeDuration").textContent = formatTime(
+            state.audio.duration
+          )
+        })
+        state.audio.addEventListener("timeupdate", () => {
+          getElement("timeCurrent").textContent = formatTime(
+            state.audio.currentTime
+          )
+          const pct = (state.audio.currentTime / state.audio.duration) * 100
+          getElement("progressBar").style.width = `${pct}%`
+        })
+        state.audio.addEventListener("ended", () => nextTrack())
+        state.audio
+          .play()
+          .then(() => {
+            state.isPlaying = true
+            getElement("btnPlay").innerHTML = `${box.lt} PAUSE ${box.rt}`
+            getElement("vizStatus").innerHTML = `${box.lt} ACTIVE ${box.rt}`
+            getElement("vizMode").textContent = state.mirrorMode
+              ? "MIRROR: ON"
+              : "MIRROR: OFF"
+            getElement("statusLine").textContent = `PLAYING: ${track.title}`
+            getElement("trackInfo").textContent =
+              `${track.genre || "UNKNOWN"} | ${track.bpm ? track.bpm + " BPM" : "120 BPM"}`
+            try {
+              setupWebAudio()
+              if (state.audioCtx.state === "suspended") state.audioCtx.resume()
+              startVisualizer()
+            } catch (e) {
+              console.log("WebAudio not available:", e)
+            }
+          })
+          .catch(() => {
+            getElement("statusLine").textContent = "AUDIO PLAYBACK ERROR"
+          })
+        getElement("nowPlayingTitle").textContent = track.title
+        getElement("nowPlayingMeta").textContent =
+          `${track.genre || "UNKNOWN"} | ${track.duration || "--:--"}`
+        getElement("btnPlay").disabled = false
+        getElement("btnPrev").disabled = state.currentTrackIdx <= 0
+        getElement("btnNext").disabled =
+          state.currentTrackIdx >= state.allTracks.length - 1
+        document.querySelectorAll(".track-row").forEach((el) => {
+          const id = parseInt(el.getAttribute("data-track-id"))
+          el.classList.toggle("bg-primary/30", id === track.id)
+          el.classList.toggle("border-primary", id === track.id)
+        })
+      }
+
+      function togglePlay() {
+        if (!state.audio) return
+        if (state.isPlaying) {
+          state.audio.pause()
+          if (state.animFrameId) {
+            cancelAnimationFrame(state.animFrameId)
+            state.animFrameId = null
+          }
+          state.isPlaying = false
+          getElement("btnPlay").innerHTML = `${box.lt} PLAY ${box.rt}`
+          getElement("vizStatus").innerHTML = `${box.lt} PAUSED ${box.rt}`
+          getElement("statusLine").textContent = "PAUSED"
+        } else {
+          state.audio.play()
+          state.isPlaying = true
+          getElement("btnPlay").innerHTML = `${box.lt} PAUSE ${box.rt}`
+          getElement("vizStatus").innerHTML = `${box.lt} ACTIVE ${box.rt}`
+          getElement("statusLine").textContent = "PLAYING"
+          if (state.audioCtx && state.audioCtx.state === "suspended")
+            state.audioCtx.resume()
+          startVisualizer()
+        }
+      }
+
+      function prevTrack() {
+        if (state.currentTrackIdx > 0) {
+          state.currentTrackIdx--
+          playTrack(state.allTracks[state.currentTrackIdx])
+        }
+      }
+      function nextTrack() {
+        if (state.currentTrackIdx < state.allTracks.length - 1) {
+          state.currentTrackIdx++
+          playTrack(state.allTracks[state.currentTrackIdx])
+        }
+      }
+      function seek(pct) {
+        if (state.audio) state.audio.currentTime = pct * state.audio.duration
+      }
+
+      function startVisualizer() {
+        if (!state.isPlaying) return
+        renderVisualizer()
+      }
+
+      function renderVisualizer() {
+        if (!state.isPlaying) return
+        state.animFrameId = requestAnimationFrame(renderVisualizer)
+        const canvas = document.getElementById("canvas-viz")
+        const ctx = canvas.getContext("2d")
+        if (!canvas || !ctx) return
+        const width = (canvas.width = canvas.parentElement.clientWidth)
+        const height = (canvas.height = canvas.parentElement.clientHeight)
+        ctx.clearRect(0, 0, width, height)
+        if (state.analyser) {
+          state.analyser.getByteFrequencyData(state.dataArray)
+          const barWidth = width / state.dataArray.length
+          for (let i = 0; i < state.dataArray.length; i++) {
+            const barHeight = (state.dataArray[i] / 255) * height
+            ctx.fillStyle = `hsl(${180 + i * 2}, 85%, ${55 + (state.dataArray[i] / 255) * 30}%)`
+            ctx.fillRect(
+              i * barWidth,
+              height - barHeight,
+              barWidth - 1,
+              barHeight
+            )
+            if (state.mirrorMode) {
+              const mirrorIndex = state.dataArray.length - 1 - i
+              const mirrorBarHeight =
+                (state.dataArray[mirrorIndex] / 255) * height
+              ctx.fillStyle = `hsl(${180 + mirrorIndex * 2}, 85%, ${55 + (state.dataArray[mirrorIndex] / 255) * 30}%)`
+              ctx.fillRect(
+                width - (mirrorIndex + 1) * barWidth,
+                height - mirrorBarHeight,
+                barWidth - 1,
+                mirrorBarHeight
+              )
+            }
+          }
+        }
+      }
+
+      function toggleMirror() {
+        state.mirrorMode = !state.mirrorMode
+        getElement("vizMode").textContent = state.mirrorMode
+          ? "MIRROR: ON"
+          : "MIRROR: OFF"
+        getElement("statusLine").textContent =
+          `MIRROR MODE: ${state.mirrorMode ? "ON" : "OFF"}`
+        setTimeout(() => {
+          getElement("statusLine").textContent = state.isPlaying
+            ? "PLAYING"
+            : "SYSTEM READY"
+        }, 2000)
+      }
+
+      function loadAlbum(idx) {
+        state.currentAlbumIdx = idx
+        const album = state.albums[idx]
+        getElement("albumIndicator").innerHTML =
+          `${box.lt} ${album.title.toUpperCase()} ${box.rt}`
+        if (!album.tracks || album.tracks.length === 0) {
+          getElement("trackList").innerHTML =
+            '<div class="p-4 text-center text-xs text-rose-500">NO TRACKS FOUND</div>'
+          return
+        }
+        const fragment = document.createDocumentFragment()
+        album.tracks.forEach((t, i) => {
+          const div = document.createElement("div")
+          div.onclick = () => {
+            state.currentTrackIdx = state.allTracks.findIndex(
+              (x) => x.id === t.id
+            )
+            playTrack(t)
+          }
+          div.className =
+            "track-row p-1.5 sm:p-2 text-xs border border-border bg-card/30 hover:bg-primary/20 hover:border-primary cursor-pointer flex items-center justify-between transition-all"
+          div.setAttribute("data-track-id", t.id)
+          div.innerHTML = `<div class="flex items-center gap-2 truncate"><span class="text-muted-foreground font-mono">${i + 1 < 10 ? "0" + (i + 1) : i + 1}.</span><span class="text-foreground font-bold truncate">${t.title}</span></div><div class="flex items-center gap-2 sm:gap-3 text-[9px] text-muted-foreground"><span>${t.genre || "AUDIO"}</span><span>${t.duration || "--:--"}</span></div>`
+          fragment.appendChild(div)
+        })
+        getElement("trackList").innerHTML = ""
+        getElement("trackList").appendChild(fragment)
+        getElement("statusLine").textContent = `LOADED ALBUM: ${album.title}`
+        if (album.cover) {
+          const img = new Image()
+          img.src = album.cover
+          img.className =
+            "w-full h-full object-cover opacity-0 transition-opacity duration-300"
+          img.alt = album.title
+          img.onload = () => {
+            img.classList.remove("opacity-0")
+            img.classList.add("opacity-100")
+          }
+          getElement("artDisplay").innerHTML = ""
+          getElement("artDisplay").appendChild(img)
+        }
+      }
+
+      function init() {
+        ;[
+          "trackList",
+          "albumIndicator",
+          "nowPlayingTitle",
+          "nowPlayingMeta",
+          "timeCurrent",
+          "timeDuration",
+          "progressBar",
+          "progressContainer",
+          "statusLine",
+          "vizStatus",
+          "vizMode",
+          "vizInfo",
+          "trackInfo",
+          "artDisplay",
+          "btnPlay",
+          "btnPrev",
+          "btnNext",
+          "themeToggle",
+        ].forEach((id) => (elements[id] = document.getElementById(id)))
+        document
+          .getElementById("progress-container")
+          .addEventListener("click", (e) => {
+            if (!state.audio) return
+            const rect = elements.progressContainer.getBoundingClientRect()
+            seek((e.clientX - rect.left) / rect.width)
+          })
+        document
+          .getElementById("theme-toggle")
+          .addEventListener("click", () => {
+            const el = document.documentElement
+            el.classList.toggle("dark")
+            localStorage.setItem(
+              "theme",
+              el.classList.contains("dark") ? "dark" : "light"
+            )
+            getElement("statusLine").textContent =
+              `THEME: ${el.classList.contains("dark") ? "DARK MODE" : "LIGHT MODE"}`
+            setTimeout(() => {
+              getElement("statusLine").textContent = state.isPlaying
+                ? "PLAYING"
+                : "SYSTEM READY"
+            }, 2000)
+          })
+        document.addEventListener("keydown", (e) => {
+          switch (e.code) {
+            case "Space":
+              e.preventDefault()
+              togglePlay()
+              break
+            case "ArrowLeft":
+              e.preventDefault()
+              prevTrack()
+              break
+            case "ArrowRight":
+              e.preventDefault()
+              nextTrack()
+              break
+            case "Escape":
+              e.preventDefault()
+              if (state.isPlaying) {
+                cleanup()
+                state.isPlaying = false
+                getElement("btnPlay").innerHTML = `${box.lt} PLAY ${box.rt}`
+                getElement("vizStatus").innerHTML = `${box.lt} PAUSED ${box.rt}`
+                getElement("statusLine").textContent = "STOPPED"
+              }
+              break
+            case "KeyM":
+              e.preventDefault()
+              toggleMirror()
+              break
+          }
+        })
+        window.addEventListener(
+          "resize",
+          debounce(() => {
+            if (state.isPlaying) startVisualizer()
+          }, 100)
+        )
+      }
+
+      document.addEventListener("DOMContentLoaded", init)
+      window.loadAlbum = (idx) => loadAlbum(idx)
+    </script>
+
+    <div
+      class="box-border flex h-full w-full flex-col gap-1 p-1 sm:gap-2 sm:p-2 md:p-4"
+    >
+      <header
+        class="flex items-center justify-between border border-primary/40 bg-card/60 p-1 sm:p-2"
+      >
+        <a
+          href="/"
+          class="flex items-center gap-2 rounded border border-primary/40 px-2 py-1 text-[10px] font-bold text-primary transition-colors hover:bg-primary/20 sm:text-xs"
+        >
+          <span>{box.lt}</span><span>BACK TO MAIN</span><span>{box.rt}</span>
+        </a>
+        <div class="text-sm font-bold tracking-widest text-primary/80">
+          [ TUI MP3 PLAYER ]
+        </div>
+        <div class="flex items-center gap-3">
+          <button
+            id="theme-toggle"
+            class="rounded border border-primary/40 px-2 py-1 text-[9px] font-bold text-primary transition-colors hover:bg-primary/20"
+          >
+            <svg
+              id="theme-toggle-sun"
+              class="hidden h-4 w-4 dark:block"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M12 3v2.25m0 13.5V21m8.966-8.966h-2.25m-13.5 0h-2.25m15.364-6.364l-1.591 1.591M6.343 17.657l-1.591 1.591m15.364 0l-1.591-1.591M6.343 6.343L4.752 4.752M12 7.5a4.5 4.5 0 100 9 4.5 4.5 0 000-9z"
+              ></path>
+            </svg>
+            <svg
+              id="theme-toggle-moon"
+              class="block h-4 w-4 dark:hidden"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z"
+              ></path>
+            </svg>
+          </button>
+          <div
+            class="flex flex-col items-end font-mono text-[9px] text-primary/60"
+          >
+            <div>
+              SYS_STAT: <span class="animate-pulse text-chart-2">* ONLINE</span>
+            </div>
+            <div>CORE_VER: 3.08</div>
+          </div>
+        </div>
+      </header>
+      <main
+        class="flex flex-1 flex-col gap-1 overflow-hidden sm:gap-2 md:flex-row"
+      >
+        <section
+          class="flex w-full flex-col overflow-hidden border border-primary/30 bg-card/40 md:w-64 lg:w-72"
+        >
+          <div
+            class="flex justify-between border-b border-primary/30 bg-card/60 px-2 py-1 text-xs font-bold tracking-widest text-primary/80"
+          >
+            <span
+              >{box.tl}{box.h}{box.h} [ ALBUM ARCHIVE ] {box.h}{box.h}{
+                box.tr
+              }</span
+            >
+            <span>{box.lt}{albumsWithCovers.length}{box.rt}</span>
+          </div>
+          <div
+            class="custom-scroll flex-1 space-y-0.5 overflow-y-auto p-1 sm:p-2"
+          >
+            {
+              albumsWithCovers.map((album, idx) => (
+                <div
+                  onclick="window.loadAlbum(${idx})"
+                  class="album-item group cursor-pointer border border-primary/10 bg-card/30 p-1.5 text-xs transition-all hover:border-primary hover:bg-primary/20 sm:p-2"
+                >
+                  <div class="flex items-center justify-between font-bold text-foreground group-hover:text-primary">
+                    <span class="truncate">
+                      {box.v} [{idx < 9 ? "0" + (idx + 1) : idx + 1}]{" "}
+                      {album.title}
+                    </span>
+                    <span class="text-[9px] text-primary/60">
+                      {album.tracks.length}TRK{box.v}
+                    </span>
+                  </div>
+                  <div class="mt-0.5 truncate text-[9px] text-muted-foreground">
+                    {box.v} {album.description || "No metadata."}
+                  </div>
+                </div>
+              ))
+            }
+          </div>
+          <div
+            class="flex justify-between border-t border-primary/20 bg-card/60 p-1 text-[9px] text-muted-foreground"
+          >
+            <span>{box.tl} TOTAL TRACKS: {allTracks.length} {box.rt}</span>
+            <span>{box.tl} MEM: OK {box.rt}</span>
+          </div>
+        </section>
+        <section
+          class="flex flex-1 flex-col overflow-hidden border border-primary/30 bg-card/40"
+        >
+          <div
+            class="flex justify-between border-b border-primary/30 bg-card/60 px-2 py-1 text-xs font-bold tracking-widest text-primary/80"
+          >
+            <span
+              >{box.tl}{box.h}{box.h} [ TRACK DIRECTORY ] {box.h}{box.h}{
+                box.tr
+              }</span
+            >
+            <span id="album-indicator">{box.lt} NO ALBUM LOADED {box.rt}</span>
+          </div>
+          <div
+            id="track-list"
+            class="custom-scroll flex-1 space-y-0.5 overflow-y-auto p-1 sm:p-2"
+          >
+            <div
+              class="flex h-full flex-col items-center justify-center text-xs text-muted-foreground"
+            >
+              <pre
+                class="mb-2 text-[9px] leading-[9px] text-primary/60">  SELECT AN ALBUM TO POPULATE AUDIO TRACKS            </pre>
+            </div>
+          </div>
+          <div
+            class="flex flex-col gap-1.5 border-t border-primary/40 bg-card/80 p-2 shadow-[0_-3px_10px_rgba(0,0,0,0.3)] sm:p-3"
+          >
+            <div
+              class="flex items-end justify-between border-b border-primary/20 pb-1 text-xs"
+            >
+              <div class="truncate pr-2">
+                <span class="text-muted-foreground">NOW_PLAYING:</span>
+                <span
+                  id="now-playing-title"
+                  class="ml-1 font-bold text-foreground">STANDBY MODE</span
+                >
+              </div>
+              <div
+                id="now-playing-meta"
+                class="text-[9px] whitespace-nowrap text-muted-foreground"
+              >
+                --:-- | -- BPM
+              </div>
+            </div>
+            <div class="flex items-center gap-1.5 text-xs">
+              <span
+                id="time-current"
+                class="w-8 text-right font-mono text-primary/80 sm:w-10"
+                >00:00</span
+              >
+              <div
+                id="progress-container"
+                class="relative h-2 flex-1 cursor-pointer overflow-hidden border border-primary/40 bg-card/80 sm:h-3"
+              >
+                <div
+                  id="progress-bar"
+                  class="h-full w-0 bg-primary/80 transition-all duration-100"
+                >
+                </div>
+                <div
+                  class="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,transparent_90%,rgba(0,0,0,0.8)_90%)] bg-[length:6px_100%]"
+                >
+                </div>
+              </div>
+              <span
+                id="time-duration"
+                class="w-8 font-mono text-muted-foreground sm:w-10">00:00</span
+              >
+            </div>
+            <div class="flex items-center justify-center gap-2 pt-1 sm:gap-3">
+              <button
+                id="btn-prev"
+                onclick="prevTrack()"
+                disabled
+                class="cyber-btn border border-primary/40 px-3 py-1 text-[10px] font-bold text-primary hover:bg-primary/20 disabled:opacity-30 sm:px-4 sm:text-xs"
+                >{box.lt}{box.lt} PREV {box.rt}{box.rt}</button
+              >
+              <button
+                id="btn-play"
+                onclick="togglePlay()"
+                disabled
+                class="cyber-btn border-2 border-primary bg-primary/20 px-4 py-1 text-[11px] font-bold text-primary-foreground transition-all hover:bg-primary hover:text-primary-foreground disabled:opacity-30 sm:px-6 sm:text-sm"
+                >{box.lt} PLAY {box.rt}</button
+              >
+              <button
+                id="btn-next"
+                onclick="nextTrack()"
+                disabled
+                class="cyber-btn border border-primary/40 px-3 py-1 text-[10px] font-bold text-primary hover:bg-primary/20 disabled:opacity-30 sm:px-4 sm:text-xs"
+                >{box.lt}{box.lt} NEXT {box.rt}{box.rt}</button
+              >
+            </div>
+          </div>
+        </section>
+        <section
+          class="flex w-full flex-col overflow-hidden border border-primary/30 bg-card/40 md:w-64 lg:w-80"
+        >
+          <div
+            class="flex justify-between border-b border-primary/30 bg-card/60 px-2 py-1 text-xs font-bold tracking-widest text-primary/80"
+          >
+            <span
+              >{box.tl}{box.h}{box.h} [ SPECTROGRAPH ] {box.h}{box.h}{
+                box.tr
+              }</span
+            >
+            <span id="viz-status">{box.lt} OFFLINE {box.rt}</span>
+          </div>
+          <div
+            class="relative flex h-32 items-center justify-center border-b border-primary/20 bg-card/60 p-1 sm:h-40 sm:p-2"
+          >
+            <canvas id="canvas-viz" class="h-full w-full"></canvas>
+            <div
+              id="viz-info"
+              class="absolute right-1 bottom-1 left-1 flex justify-between text-[8px] text-muted-foreground"
+            >
+              <span>{box.v} FREQ: 20-20KHz</span><span id="viz-mode"
+                >{box.v} MIRROR: ON</span
+              >
+            </div>
+          </div>
+          <div
+            class="flex flex-1 flex-col items-center justify-center bg-card/30 p-1 sm:p-2"
+          >
+            <div
+              id="art-display"
+              class="flex h-full w-full items-center justify-center overflow-hidden rounded border border-primary/20 bg-card/40"
+            >
+              <div class="text-center">
+                <pre
+                  class="font-mono text-[8px] leading-[8px] text-primary/40">MP3 AUDIO SYSTEM CYBERNETIC SOUNDSYSTEM</pre>
+              </div>
+            </div>
+          </div>
+          <div
+            class="flex justify-between border-t border-primary/20 bg-card/60 p-1.5 text-[9px] text-muted-foreground"
+          >
+            <span>{box.v} EQ: FLAT</span><span id="track-info"
+              >{box.v} STEREO 44.1kHz</span
+            ><span>{box.v} VOL: 70%</span>
+          </div>
+        </section>
+      </main>
+      <footer
+        class="flex items-center justify-between border border-primary/30 bg-card/60 px-2 py-1 text-[10px] text-primary/60"
+      >
+        <div class="flex gap-3">
+          <span><strong class="text-primary">[SPACE]</strong> PLAY/PAUSE</span>
+          <span><strong class="text-primary">[LEFT/RIGHT]</strong> SKIP</span>
+          <span><strong class="text-primary">[ESC]</strong> STOP</span>
+          <span><strong class="text-primary">[M]</strong> MIRROR</span>
+        </div>
+        <div id="status-line" class="animate-pulse font-bold text-primary">
+          SYSTEM READY
+        </div>
+        <div class="text-muted-foreground">
+          {box.v}
+          {allTracks.length} tracks {box.v}
+          {albumsWithCovers.length} albums {box.v}
+        </div>
+      </footer>
+    </div>
+    <style>
+      .custom-scroll::-webkit-scrollbar {
+        width: 4px;
+      }
+      .custom-scroll::-webkit-scrollbar-track {
+        background: rgba(0, 0, 0, 0.6);
+      }
+      .custom-scroll::-webkit-scrollbar-thumb {
+        background: hsl(var(--primary));
+      }
+      .cyber-btn {
+        box-shadow: 0 0 5px rgba(6, 182, 212, 0.2);
+        text-shadow: 0 0 5px rgba(6, 182, 212, 0.6);
+      }
+      .cyber-btn:hover:not(:disabled) {
+        box-shadow: 0 0 10px rgba(6, 182, 212, 0.6);
+      }
+      @media (max-width: 768px) {
+        .text-[8px] {
+          font-size: 6px;
+        }
+        .text-[9px] {
+          font-size: 7px;
+        }
+        .text-[10px] {
+          font-size: 8px;
+        }
+        .text-xs {
+          font-size: 10px;
+        }
+        pre {
+          display: none;
+        }
+      }
+      @media (max-width: 640px) {
+        .md\:w-64,
+        .md\:w-80 {
+          width: 100%;
+        }
+        .md\:flex-row {
+          flex-direction: column;
+        }
+        .h-32 {
+          height: 8rem;
+        }
+        #viz-info {
+          display: none;
+        }
+      }
+    </style>
+  </body>
+</html>

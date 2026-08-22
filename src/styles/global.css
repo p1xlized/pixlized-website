@@ -1,6 +1,6 @@
 /* apps/web/src/styles.css */
 @import "tailwindcss";
-
+@plugin "@tailwindcss/typography";
 /* --- 1. FONT IMPORTS --- */
 @import "@fontsource-variable/jetbrains-mono";
 @import "@fontsource/ibm-plex-mono/400.css";
@@ -159,4 +159,44 @@
 /* --- 5. TUI UTILITIES --- */
 .text-metadata {
   @apply font-mono text-[7px] tracking-[0.3em] uppercase opacity-40;
+}
+
+/* --- 6. CODE BLOCK STYLES FOR MARKDOWN --- */
+/* Fix double code block boxes - style only the code inside pre */
+.prose pre {
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  background: transparent !important;
+}
+
+.prose pre code {
+  display: block !important;
+  width: 100% !important;
+  margin: 0 !important;
+  padding: 1rem !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: 0.5rem !important;
+  background-color: var(--color-card) !important;
+  font-family: var(--font-mono) !important;
+  font-size: 0.875rem !important;
+}
+
+.prose code:not(pre code) {
+  border-radius: 0.25rem !important;
+  padding: 0.25rem 0.5rem !important;
+  background-color: var(--color-muted) !important;
+  font-family: var(--font-mono) !important;
+  font-size: 0.875rem !important;
+  color: oklch(0.15 0.02 240) !important;
+}
+
+.dark .prose pre code {
+  background-color: oklch(0.18 0.02 260) !important;
+  border-color: oklch(0.35 0.03 180 / 0.4) !important;
+}
+
+.dark .prose code:not(pre code) {
+  background-color: oklch(0.2 0.02 260) !important;
+  color: oklch(0.95 0.02 180) !important;
 }

@@ -1,0 +1,324 @@
+---
+import MainLayout from "@/layouts/main.astro"
+import { db } from "@/db/db"
+
+// Get existing albums for the dropdown
+const albums = db
+  .prepare("SELECT * FROM albums ORDER BY title ASC")
+  .all() as any[]
+---
+
+<MainLayout>
+  <section
+    class="flex h-full w-full flex-col items-center justify-start px-4 py-12"
+  >
+    <div class="w-full max-w-2xl space-y-6">
+      <!-- Header -->
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-2xl font-bold tracking-tight">
+            <span class="font-mono text-[hsl(var(--chart-2))]">+</span> Add New Track
+          </h1>
+          <p class="mt-1 text-sm text-muted-foreground">
+            Add a music track to your collection
+          </p>
+        </div>
+        <div class="flex gap-2">
+          <a
+            href="/admin/dashboard"
+            class="rounded-sm border border-border bg-secondary/50 px-3 py-1.5 font-mono text-xs font-bold tracking-wider uppercase transition-colors hover:bg-secondary/80"
+          >
+            Dashboard
+          </a>
+          <a
+            href="/admin/music"
+            class="rounded-sm border border-border bg-secondary/50 px-3 py-1.5 font-mono text-xs font-bold tracking-wider uppercase transition-colors hover:bg-secondary/80"
+          >
+            All Tracks
+          </a>
+        </div>
+      </div>
+
+      <!-- Add Track Form -->
+      <form
+        id="add-track-form"
+        class="space-y-6 rounded-sm border border-border bg-card p-6 shadow-sm"
+      >
+        <div class="space-y-4">
+          <!-- Track Title -->
+          <div class="space-y-1">
+            <label
+              class="font-mono text-[10px] tracking-wider text-muted-foreground/80 uppercase"
+            >
+              Track Title <span class="text-[hsl(var(--chart-2))]">*</span>
+            </label>
+            <input
+              type="text"
+              id="track-title"
+              name="title"
+              placeholder="Enter track title..."
+              required
+              class="w-full rounded-sm border border-border bg-secondary/40 px-3 py-2.5 text-sm transition-all focus:border-[hsl(var(--chart-2))] focus:ring-1 focus:ring-[hsl(var(--chart-2))]/20 focus:outline-none"
+            />
+          </div>
+
+          <!-- Genre -->
+          <div class="space-y-1">
+            <label
+              class="font-mono text-[10px] tracking-wider text-muted-foreground/80 uppercase"
+            >
+              Genre <span class="text-[hsl(var(--chart-2))]">*</span>
+            </label>
+            <input
+              type="text"
+              id="track-genre"
+              name="genre"
+              placeholder="e.g., Ambient, Electronic, Orchestral..."
+              required
+              class="w-full rounded-sm border border-border bg-secondary/40 px-3 py-2.5 text-sm transition-all focus:border-[hsl(var(--chart-2))] focus:ring-1 focus:ring-[hsl(var(--chart-2))]/20 focus:outline-none"
+            />
+          </div>
+
+          <!-- Duration -->
+          <div class="space-y-1">
+            <label
+              class="font-mono text-[10px] tracking-wider text-muted-foreground/80 uppercase"
+            >
+              Duration <span class="text-[hsl(var(--chart-2))]">*</span>
+            </label>
+            <input
+              type="text"
+              id="track-duration"
+              name="duration"
+              placeholder="e.g., 3:45, 4:20..."
+              required
+              class="w-full rounded-sm border border-border bg-secondary/40 px-3 py-2.5 text-sm transition-all focus:border-[hsl(var(--chart-2))] focus:ring-1 focus:ring-[hsl(var(--chart-2))]/20 focus:outline-none"
+            />
+          </div>
+
+          <!-- BPM -->
+          <div class="space-y-1">
+            <label
+              class="font-mono text-[10px] tracking-wider text-muted-foreground/80 uppercase"
+            >
+              BPM
+            </label>
+            <input
+              type="text"
+              id="track-bpm"
+              name="bpm"
+              placeholder="e.g., 120, 135..."
+              class="w-full rounded-sm border border-border bg-secondary/40 px-3 py-2.5 text-sm transition-all focus:border-[hsl(var(--chart-2))] focus:ring-1 focus:ring-[hsl(var(--chart-2))]/20 focus:outline-none"
+            />
+          </div>
+
+          <!-- Description -->
+          <div class="space-y-1">
+            <label
+              class="font-mono text-[10px] tracking-wider text-muted-foreground/80 uppercase"
+            >
+              Description
+            </label>
+            <textarea
+              id="track-description"
+              name="description"
+              rows="3"
+              placeholder="Describe this track..."
+              class="w-full resize-none rounded-sm border border-border bg-secondary/40 px-3 py-2.5 text-sm transition-all focus:border-[hsl(var(--chart-2))] focus:ring-1 focus:ring-[hsl(var(--chart-2))]/20 focus:outline-none"
+            ></textarea>
+          </div>
+
+          <!-- File URL -->
+          <div class="space-y-1">
+            <label
+              class="font-mono text-[10px] tracking-wider text-muted-foreground/80 uppercase"
+            >
+              Audio File URL <span class="text-[hsl(var(--chart-2))]">*</span>
+            </label>
+            <input
+              type="text"
+              id="track-file"
+              name="file"
+              placeholder="e.g., /assets/music/track.mp3"
+              required
+              class="w-full rounded-sm border border-border bg-secondary/40 px-3 py-2.5 text-sm transition-all focus:border-[hsl(var(--chart-2))] focus:ring-1 focus:ring-[hsl(var(--chart-2))]/20 focus:outline-none"
+            />
+            <p class="font-mono text-[9px] text-muted-foreground/60">
+              Upload your MP3 files to /public/assets/music/ and reference them
+              here
+            </p>
+          </div>
+
+          <!-- Album Selection -->
+          <div class="space-y-1">
+            <label
+              class="font-mono text-[10px] tracking-wider text-muted-foreground/80 uppercase"
+            >
+              Album <span class="text-[hsl(var(--chart-2))]">*</span>
+            </label>
+            <select
+              id="track-album"
+              name="albumId"
+              required
+              class="w-full rounded-sm border border-border bg-secondary/40 px-3 py-2.5 text-sm transition-all focus:border-[hsl(var(--chart-2))] focus:ring-1 focus:ring-[hsl(var(--chart-2))]/20 focus:outline-none"
+            >
+              <option value="" disabled selected>Select an album...</option>
+              {
+                albums.map((album) => (
+                  <option value={album.id}>{album.title}</option>
+                ))
+              }
+            </select>
+          </div>
+
+          <!-- New Album Quick Create -->
+          <div class="flex items-center gap-2 text-sm">
+            <span class="font-mono text-muted-foreground/60"
+              >Need a new album?</span
+            >
+            <a
+              href="/admin/albums/new"
+              class="font-mono text-xs font-bold tracking-wider text-[hsl(var(--chart-2))] uppercase hover:underline"
+            >
+              + Create Album
+            </a>
+          </div>
+        </div>
+
+        <div class="flex gap-2 pt-4">
+          <button
+            type="submit"
+            class="flex-1 rounded-sm bg-[hsl(var(--chart-2))] py-2.5 font-mono text-sm font-bold tracking-wider text-white uppercase shadow-sm transition-all hover:bg-[hsl(var(--chart-2))]/90"
+          >
+            Add Track
+          </button>
+          <button
+            type="reset"
+            class="rounded-sm border border-border bg-secondary/50 px-4 py-2.5 font-mono text-sm font-bold tracking-wider uppercase transition-colors hover:bg-secondary/80"
+          >
+            Reset
+          </button>
+        </div>
+      </form>
+
+      <!-- Success Message -->
+      <div
+        id="success-message"
+        class="hidden rounded-sm border border-green-500/30 bg-green-500/10 p-4 text-center"
+      >
+        <span class="font-mono text-green-400">✓</span>
+        <span class="ml-2 font-mono text-sm">Track added successfully!</span>
+      </div>
+
+      <!-- Error Message -->
+      <div
+        id="error-message"
+        class="hidden rounded-sm border border-red-500/30 bg-red-500/10 p-4 text-center"
+      >
+        <span class="font-mono text-red-400">✗</span>
+        <span id="error-text" class="ml-2 font-mono text-sm"></span>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    // Check auth and pre-select album if provided
+    document.addEventListener("DOMContentLoaded", () => {
+      const isLoggedIn =
+        sessionStorage.getItem("admin_logged_in") ||
+        localStorage.getItem("admin_token")
+      if (!isLoggedIn) {
+        window.location.href = "/admin"
+      }
+
+      // Pre-select album from URL parameter
+      const urlParams = new URLSearchParams(window.location.search)
+      const albumIdParam = urlParams.get("albumId")
+      if (albumIdParam) {
+        const albumSelect = document.getElementById(
+          "track-album"
+        ) as HTMLSelectElement
+        if (albumSelect) {
+          albumSelect.value = albumIdParam
+        }
+      }
+
+      const form = document.getElementById("add-track-form")
+      const successMsg = document.getElementById("success-message")
+      const errorMsg = document.getElementById("error-message")
+      const errorText = document.getElementById("error-text")
+
+      form?.addEventListener("submit", async (e) => {
+        e.preventDefault()
+
+        const title =
+          (document.getElementById("track-title") as HTMLInputElement)?.value ||
+          ""
+        const genre =
+          (document.getElementById("track-genre") as HTMLInputElement)?.value ||
+          ""
+        const duration =
+          (document.getElementById("track-duration") as HTMLInputElement)
+            ?.value || ""
+        const bpm =
+          (document.getElementById("track-bpm") as HTMLInputElement)?.value ||
+          ""
+        const description =
+          (document.getElementById("track-description") as HTMLTextAreaElement)
+            ?.value || ""
+        const file =
+          (document.getElementById("track-file") as HTMLInputElement)?.value ||
+          ""
+        const albumId = parseInt(
+          (document.getElementById("track-album") as HTMLSelectElement)
+            ?.value || 0
+        )
+
+        if (!albumId) {
+          errorText.textContent = "Please select an album"
+          errorMsg.classList.remove("hidden")
+          successMsg.classList.add("hidden")
+          setTimeout(() => errorMsg.classList.add("hidden"), 3000)
+          return
+        }
+
+        try {
+          const response = await fetch("/api/admin/music", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem("admin_token")}`,
+            },
+            body: JSON.stringify({
+              title,
+              genre,
+              duration,
+              bpm,
+              description,
+              file,
+              albumId,
+            }),
+          })
+
+          if (response.ok) {
+            form.reset()
+            successMsg.classList.remove("hidden")
+            errorMsg.classList.add("hidden")
+            setTimeout(() => successMsg.classList.add("hidden"), 3000)
+          } else {
+            const data = await response.json()
+            errorText.textContent = data.error || "Failed to add track"
+            errorMsg.classList.remove("hidden")
+            successMsg.classList.add("hidden")
+            setTimeout(() => errorMsg.classList.add("hidden"), 3000)
+          }
+        } catch (err) {
+          errorText.textContent = "Network error. Please try again."
+          errorMsg.classList.remove("hidden")
+          successMsg.classList.add("hidden")
+          setTimeout(() => errorMsg.classList.add("hidden"), 3000)
+        }
+      })
+    })
+  </script>
+</MainLayout>

@@ -34,3 +34,24 @@ import { Button } from "@/components/ui/button"
   </body>
 </html>
 ```
+
+```
+# 1. Install Cloudflare dependencies
+pnpm add -g wrangler
+pnpm add @astrojs/cloudflare
+
+# 2. Configure environment
+cp .env.example .env
+# Edit .env with your values
+
+# 3. Set Cloudflare secrets
+wrangler secret put ADMIN_SEED
+wrangler secret put ADMIN_USER
+wrangler secret put ADMIN_PASS
+wrangler secret put FORMSPREE_ENDPOINT
+
+# 4. Build and deploy
+pnpm run build:cloudflare
+pnpm run deploy:cloudflare
+
+```
