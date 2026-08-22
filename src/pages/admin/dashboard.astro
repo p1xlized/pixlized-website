@@ -176,7 +176,9 @@ import { db } from "@/db/db"
         localStorage.getItem("admin_token")
 
       if (!isLoggedIn) {
-        window.location.href = "/admin"
+        // Redirect to admin login page
+        const adminSeed = import.meta.env.ADMIN_SEED || "pixlized-secret-2026"
+        window.location.href = `/secret/${adminSeed}/admin`
       }
     })
   </script>

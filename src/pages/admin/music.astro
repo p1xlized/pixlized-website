@@ -196,7 +196,8 @@ const albums = db.prepare("SELECT * FROM albums ORDER BY title ASC").all() as an
       const isLoggedIn = sessionStorage.getItem('admin_logged_in') ||
                         localStorage.getItem('admin_token')
       if (!isLoggedIn) {
-        window.location.href = '/admin'
+        const adminSeed = import.meta.env.ADMIN_SEED || "pixlized-secret-2026"
+        window.location.href = `/secret/${adminSeed}/admin`
       }
 
       // Delete modal handling

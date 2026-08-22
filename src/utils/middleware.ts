@@ -2,32 +2,34 @@ import { defineMiddleware } from "astro:middleware"
 
 const ADMIN_SEED = import.meta.env.ADMIN_SEED || ""
 
-// Hide admin behind /<random-seed>/admin/
+// Hide admin login behind /secret/<ADMIN_SEED>/admin/
 export const onRequest = defineMiddleware(async (context, next) => {
   const url = new URL(context.request.url)
 
-  // Check if this is an admin route
-  if (url.pathname.startsWith("/admin") || url.pathname === "/admin") {
-    // Extract the seed from the path if it exists
-    // Expected format: /<seed>/admin/...
-    const pathParts = url.pathname.split("/")
+  // Check if this is the admin login route
+  const pathParts = url.pathname.split("/")
 
-    // Check if the path is /<seed>/admin
-    if (
-      pathParts.length >= 3 &&
-      pathParts[1] === ADMIN_SEED &&
-      pathParts[2] === "admin"
-    ) {
-      // Valid seed, allow access
-      return next()
-    }
+  // Check if the path is /secret/<seed>/admin (login page)
+  if (
+    pathParts.length >= 4 &&
+    pathParts[1] === "secret" &&
+    pathParts[2] === ADMIN_SEED &&
+    pathParts[3] === "admin"
+  ) {
+    // Valid seed, allow access to login page
+    return next()
+  }
 
-    // Check if it's directly /admin without seed
-    if (url.pathname === "/admin" || url.pathname.startsWith("/admin/")) {
-      // Redirect to the seeded admin URL
-      const newUrl = `/${ADMIN_SEED}/admin${url.pathname === "/admin" ? "" : url.pathname.substring(5)}`
-      return Response.redirect(new URL(newUrl, context.request.url), 302)
-    }
+  // Check if it's directly /admin (without subpath) - redirect to login
+  if (url.pathname === "/admin") {
+    const newUrl = `/secret/${ADMIN_SEED}/admin`
+    return Response.redirect(new URL(newUrl, context.request.url), 302)
+  }
+
+  // Allow all other /admin/* routes to pass through (dashboard, albums, etc.)
+  // They will handle their own auth checks
+  if (url.pathname.startsWith("/admin/")) {
+    return next()
   }
 
   // Add Cloudflare caching headers for static assets

@@ -11,20 +11,23 @@ import { Code, BookOpen, Music, Sun, Moon } from "@thesvg/react"
     <title>Astro App</title>
 
     <script is:inline>
-      const getThemePreference = () => {
-        if (
-          typeof localStorage !== "undefined" &&
-          localStorage.getItem("theme")
-        ) {
-          return localStorage.getItem("theme")
+      // Theme initialization - runs immediately on page load
+      (() => {
+        const getThemePreference = () => {
+          if (typeof localStorage !== "undefined" && localStorage.getItem("theme")) {
+            return localStorage.getItem("theme")
+          }
+          return window.matchMedia("(prefers-color-scheme: dark)").matches
+            ? "dark"
+            : "light"
         }
-        return window.matchMedia("(prefers-color-scheme: dark)").matches
-          ? "dark"
-          : "light"
-      }
-      const isDark = getThemePreference() === "dark"
-      document.documentElement.classList[isDark ? "add" : "remove"]("dark")
+        const isDark = getThemePreference() === "dark"
+        document.documentElement.classList[isDark ? "add" : "remove"]("dark")
+      })()
+    </script>
 
+    <script>
+      // Theme persistence - runs after page transition
       if (typeof localStorage !== "undefined") {
         const observer = new MutationObserver(() => {
           const isDark = document.documentElement.classList.contains("dark")
@@ -35,6 +38,17 @@ import { Code, BookOpen, Music, Sun, Moon } from "@thesvg/react"
           attributeFilter: ["class"],
         })
       }
+    </script>
+
+    <script>
+      // Handle theme on Astro page transitions
+      document.addEventListener('astro:after-swap', () => {
+        const savedTheme = localStorage.getItem('theme')
+        if (savedTheme) {
+          const isDark = savedTheme === 'dark'
+          document.documentElement.classList[isDark ? 'add' : 'remove']('dark')
+        }
+      })
     </script>
   </head>
 
