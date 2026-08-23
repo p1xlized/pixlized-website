@@ -1,7 +1,7 @@
 import tailwindcss from "@tailwindcss/vite"
 import { defineConfig } from "astro/config"
 import react from "@astrojs/react"
-import node from "@astrojs/node"
+import cloudflare from "@astrojs/cloudflare"
 
 // https://astro.build/config
 export default defineConfig({
@@ -9,16 +9,15 @@ export default defineConfig({
     plugins: [tailwindcss()],
   },
   output: "server",
-  adapter: node({
-    mode: "standalone",
+  adapter: cloudflare({
+    imageService: "cloudflare", // Uses Cloudflare's image optimization
   }),
   integrations: [react()],
   markdown: {
     shikiConfig: {
-      // Choose dual themes for dark and light mode
       themes: {
-        light: "vitesse-light", // or 'min-light'
-        dark: "vitesse-dark", // or 'nord'
+        light: "vitesse-light",
+        dark: "vitesse-dark",
       },
     },
   },

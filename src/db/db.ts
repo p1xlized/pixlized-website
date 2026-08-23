@@ -1,21 +1,3 @@
-import { DatabaseSync } from "node:sqlite"
-
-// Database instance
-// In Cloudflare, CF_D1_DB will be injected as a global variable
-// In development, we use local SQLite
-declare global {
-  var CF_D1_DB: any
-}
-
-const dbInstance =
-  typeof CF_D1_DB !== "undefined" ? CF_D1_DB : new DatabaseSync("local.db")
-
-export const db = dbInstance
-
-// ==========================================
-// 1. TYPES & INTERFACES
-// ==========================================
-
 export interface Metric {
   label: string
   value: number
@@ -51,12 +33,12 @@ export interface Project {
   title: string
   tech: string
   role: string
-  date: string // Display format: "NOV_2024"
-  releasedAt: string // ISO format: "2024-11-15" for sorting
+  date: string
+  releasedAt: string
   tag: "MOBILE" | "WEB" | "GAME"
   description: string
   cover: string
-  imgs?: string[] // Array of images for the carousel
+  imgs?: string[]
   githubUrl: string
   projectUrl?: string
   isVideo?: boolean
@@ -426,144 +408,34 @@ export const INITIAL_PROJECTS: Project[] = [
     stack: ["React Native", "Supabase"],
   },
 ]
-db.exec(`
-  CREATE TABLE IF NOT EXISTS projects (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    title TEXT NOT NULL,
-    tech TEXT NOT NULL,
-    role TEXT NOT NULL,
-    date TEXT NOT NULL,
-    releasedAt TEXT NOT NULL,
-    tag TEXT NOT NULL,            -- 'MOBILE' | 'WEB' | 'GAME'
-    description TEXT NOT NULL,
-    cover TEXT NOT NULL,          -- Main thumbnail cover url
-    imgs TEXT,                    -- JSON stringified array of multiple images
-    githubUrl TEXT NOT NULL,
-    projectUrl TEXT,
-    isVideo INTEGER DEFAULT 0,    -- Boolean stored as 1 or 0
-    videoUrl TEXT,
-    features TEXT,                -- JSON stringified array of string features
-    metrics TEXT,                 -- JSON stringified array of Metric objects
-    awards TEXT,                  -- JSON stringified array of Award objects
-    isFeatured INTEGER DEFAULT 0, -- Boolean stored as 1 or 0
-    isPersonal INTEGER DEFAULT 1, -- Boolean stored as 1 or 0
-    stack TEXT NOT NULL           -- JSON stringified array of technologies
-  );
 
-  CREATE TABLE IF NOT EXISTS albums (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    title TEXT NOT NULL,
-    description TEXT,
-    cover TEXT,
-    createdAt TEXT DEFAULT CURRENT_TIMESTAMP
-  );
+// ==========================================
+// ASYNC D1 DATA ACCESS HELPERS
+// ==========================================
 
-  CREATE TABLE IF NOT EXISTS music_tracks (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    title TEXT NOT NULL,
-    genre TEXT NOT NULL,
-    duration TEXT NOT NULL,
-    bpm TEXT,
-    description TEXT,
-    file TEXT NOT NULL,
-    albumId INTEGER DEFAULT 1,
-    createdAt TEXT DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (albumId) REFERENCES albums(id)
-  );
-`)
-
-const checkTable = db
-  .prepare("SELECT COUNT(*) as count FROM projects")
-  .get() as { count: number }
-
-// Seed database with the complete projects list if empty
-if (checkTable.count === 0) {
-  const insertStatement = db.prepare(`
-    INSERT INTO projects (
-      title, tech, role, date, releasedAt, tag, description, cover, imgs,
-      githubUrl, projectUrl, isVideo, videoUrl, features, metrics, awards,
-      isFeatured, isPersonal, stack
-    )
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `)
-
-  for (const project of INITIAL_PROJECTS) {
-    insertStatement.run(
-      project.title,
-      project.tech,
-      project.role,
-      project.date,
-      project.releasedAt,
-      project.tag,
-      project.description,
-      project.cover,
-      project.imgs ? JSON.stringify(project.imgs) : null,
-      project.githubUrl,
-      project.projectUrl || null,
-      project.isVideo ? 1 : 0,
-      project.videoUrl || null,
-      JSON.stringify(project.features),
-      JSON.stringify(project.metrics),
-      project.awards ? JSON.stringify(project.awards) : null,
-      project.isFeatured ? 1 : 0,
-      project.isPersonal ? 1 : 0,
-      JSON.stringify(project.stack)
-    )
-  }
-
-  console.log("Portfolio database seeded with all projects!")
+export async function getProjects(d1: D1Database): Promise<Project[]> {
+  const { results } = await d1
+    .prepare("SELECT * FROM projects ORDER BY releasedAt DESC")
+    .all()
+  return (results || []).map((row: any) => ({
+    ...row,
+    imgs: row.imgs ? JSON.parse(row.imgs) : [],
+    features: row.features ? JSON.parse(row.features) : [],
+    metrics: row.metrics ? JSON.parse(row.metrics) : [],
+    awards: row.awards ? JSON.parse(row.awards) : [],
+    stack: row.stack ? JSON.parse(row.stack) : [],
+    isVideo: Boolean(row.isVideo),
+    isFeatured: Boolean(row.isFeatured),
+    isPersonal: Boolean(row.isPersonal),
+  }))
 }
 
-// Seed albums table if empty
-const checkAlbumsTable = db
-  .prepare("SELECT COUNT(*) as count FROM albums")
-  .get() as { count: number }
-
-if (checkAlbumsTable.count === 0) {
-  const insertAlbumStatement = db.prepare(`
-    INSERT INTO albums (
-      title, description, cover, createdAt
-    )
-    VALUES (?, ?, ?, ?)
-  `)
-
-  for (const album of INITIAL_ALBUMS) {
-    insertAlbumStatement.run(
-      album.title,
-      album.description,
-      album.cover,
-      album.createdAt
-    )
-  }
-
-  console.log("Albums database seeded!")
+export async function getAlbums(d1: D1Database): Promise<Album[]> {
+  const { results } = await d1.prepare("SELECT * FROM albums").all()
+  return (results as Album[]) || []
 }
 
-// Seed music_tracks table if empty
-const checkMusicTable = db
-  .prepare("SELECT COUNT(*) as count FROM music_tracks")
-  .get() as { count: number }
-
-if (checkMusicTable.count === 0) {
-  const insertMusicStatement = db.prepare(`
-    INSERT INTO music_tracks (
-      title, genre, duration, bpm, description, file, albumId, createdAt
-    )
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-  `)
-
-  for (const track of INITIAL_MUSIC_TRACKS) {
-    insertMusicStatement.run(
-      track.title,
-      track.genre,
-      track.duration,
-      track.bpm,
-      track.description,
-      track.file,
-      track.albumId,
-      track.createdAt
-    )
-  }
-
-  console.log("Music database seeded with all tracks!")
+export async function getMusicTracks(d1: D1Database): Promise<MusicTrack[]> {
+  const { results } = await d1.prepare("SELECT * FROM music_tracks").all()
+  return (results as MusicTrack[]) || []
 }
