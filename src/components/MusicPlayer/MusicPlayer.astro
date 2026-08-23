@@ -1,15 +1,13 @@
 ---
-import { db } from "@/db/db"
-import MusicPlayerComponent from './MusicPlayer';
+import { getAlbums, getMusicTracks, getD1 } from "@/db/db"
+import MusicPlayerComponent from "./MusicPlayer"
+
+// Get D1 instance from Cloudflare runtime locals
+const d1 = getD1()
 
 // Fetch data from database
-const rawAlbums = db
-  .prepare("SELECT * FROM albums ORDER BY createdAt DESC")
-  .all() as any[]
-
-const rawTracks = db
-  .prepare("SELECT * FROM music_tracks ORDER BY albumId, id")
-  .all() as any[]
+const rawAlbums = await getAlbums(d1)
+const rawTracks = await getMusicTracks(d1)
 
 // Organize data
 const albumMap = new Map<number, any>()
@@ -43,11 +41,7 @@ const albums = Array.from(albumMap.values())
 ---
 
 <!-- Client-side hydration -->
-<MusicPlayerComponent
-  client:load
-  albums={albums}
-  tracks={allTracks}
-/>
+<MusicPlayerComponent client:load albums={albums} tracks={allTracks} />
 
 <!-- Styles -->
 <style is:global>

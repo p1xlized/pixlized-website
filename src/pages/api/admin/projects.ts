@@ -1,5 +1,6 @@
 import type { APIRoute } from "astro"
-import { db } from "@/db/db"
+import { getProjects, query, queryOne, insert, execute } from "@/db/db"
+import type { D1Database } from "@cloudflare/workers-types"
 
 // Simple hash function for basic security
 const simpleHash = (str: string) => {
@@ -29,8 +30,8 @@ const verifyToken = (token: string | null): boolean => {
   }
 }
 
-export const GET: APIRoute = async ({ request }) => {
-  const token = request.headers.get('Authorization')?.replace('Bearer ', '')
+export const GET: APIRoute = async ({ request, locals }) => {
+  const token = request.headers.get("Authorization")?.replace("Bearer ", "")
 
   if (!verifyToken(token)) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -40,7 +41,8 @@ export const GET: APIRoute = async ({ request }) => {
   }
 
   try {
-    const projects = db.prepare("SELECT * FROM projects ORDER BY releasedAt DESC").all()
+    const d1 = locals.runtime.env.CF_D1_DB as D1Database
+    const projects = await getProjects(d1)
     return new Response(JSON.stringify({ projects }), {
       status: 200,
       headers: { "Content-Type": "application/json" },
@@ -53,8 +55,8 @@ export const GET: APIRoute = async ({ request }) => {
   }
 }
 
-export const POST: APIRoute = async ({ request }) => {
-  const token = request.headers.get('Authorization')?.replace('Bearer ', '')
+export const POST: APIRoute = async ({ request, locals }) => {
+  const token = request.headers.get("Authorization")?.replace("Bearer ", "")
 
   if (!verifyToken(token)) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -64,63 +66,74 @@ export const POST: APIRoute = async ({ request }) => {
   }
 
   try {
+    const d1 = locals.runtime.env.CF_D1_DB as D1Database
     const body = await request.json()
 
     // Parse comma-separated arrays
     const parseArray = (value: string | undefined): string => {
-      if (!value) return '[]'
-      return JSON.stringify(value.split(',').map((s: string) => s.trim()).filter(Boolean))
+      if (!value) return "[]"
+      return JSON.stringify(
+        value
+          .split(",")
+          .map((s: string) => s.trim())
+          .filter(Boolean)
+      )
     }
 
     // Parse JSON arrays
     const parseJson = (value: string | undefined): string => {
-      if (!value) return '[]'
+      if (!value) return "[]"
       try {
         return JSON.stringify(JSON.parse(value))
       } catch {
-        return '[]'
+        return "[]"
       }
     }
 
-    const statement = db.prepare(`
+    const result = await insert(
+      d1,
+      `
       INSERT INTO projects (
         title, tech, role, date, releasedAt, tag, description, cover,
         imgs, githubUrl, projectUrl, isVideo, videoUrl, features, stack, awards, metrics,
         isFeatured, isPersonal
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `)
-
-    const result = statement.run(
-      body.title,
-      body.tech || '',
-      body.role || '',
-      body.date || '',
-      body.releasedAt || new Date().toISOString().split('T')[0],
-      body.tag || '',
-      body.description || '',
-      body.cover || '',
-      parseArray(body.imgs),
-      body.githubUrl || '',
-      body.projectUrl || '',
-      body.isVideo || 0,
-      body.videoUrl || '',
-      parseArray(body.features),
-      parseArray(body.stack),
-      parseJson(body.awards),
-      parseJson(body.metrics),
-      body.isFeatured || 0,
-      body.isPersonal || 0
+    `,
+      [
+        body.title,
+        body.tech || "",
+        body.role || "",
+        body.date || "",
+        body.releasedAt || new Date().toISOString().split("T")[0],
+        body.tag || "",
+        body.description || "",
+        body.cover || "",
+        parseArray(body.imgs),
+        body.githubUrl || "",
+        body.projectUrl || "",
+        body.isVideo || 0,
+        body.videoUrl || "",
+        parseArray(body.features),
+        parseArray(body.stack),
+        parseJson(body.awards),
+        parseJson(body.metrics),
+        body.isFeatured || 0,
+        body.isPersonal || 0,
+      ]
     )
 
-    return new Response(JSON.stringify({
-      success: true,
-      id: result.lastInsertRowid
-    }), {
-      status: 201,
-      headers: { "Content-Type": "application/json" },
-    })
+    return new Response(
+      JSON.stringify({
+        success: true,
+        id: result.lastInsertRowid,
+      }),
+      {
+        status: 201,
+        headers: { "Content-Type": "application/json" },
+      }
+    )
   } catch (error) {
-    console.error('Error creating project:', error)
+    console.error("Error creating project:", error)
     return new Response(JSON.stringify({ error: "Failed to create project" }), {
       status: 500,
       headers: { "Content-Type": "application/json" },
@@ -128,8 +141,8 @@ export const POST: APIRoute = async ({ request }) => {
   }
 }
 
-export const PUT: APIRoute = async ({ request }) => {
-  const token = request.headers.get('Authorization')?.replace('Bearer ', '')
+export const PUT: APIRoute = async ({ request, locals }) => {
+  const token = request.headers.get("Authorization")?.replace("Bearer ", "")
 
   if (!verifyToken(token)) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -139,26 +152,34 @@ export const PUT: APIRoute = async ({ request }) => {
   }
 
   try {
+    const d1 = locals.runtime.env.CF_D1_DB as D1Database
     const body = await request.json()
     const { id, ...data } = body
 
     // Parse comma-separated arrays
     const parseArray = (value: string | undefined): string => {
-      if (!value) return '[]'
-      return JSON.stringify(value.split(',').map((s: string) => s.trim()).filter(Boolean))
+      if (!value) return "[]"
+      return JSON.stringify(
+        value
+          .split(",")
+          .map((s: string) => s.trim())
+          .filter(Boolean)
+      )
     }
 
     // Parse JSON arrays
     const parseJson = (value: string | undefined): string => {
-      if (!value) return '[]'
+      if (!value) return "[]"
       try {
         return JSON.stringify(JSON.parse(value))
       } catch {
-        return '[]'
+        return "[]"
       }
     }
 
-    const statement = db.prepare(`
+    await execute(
+      d1,
+      `
       UPDATE projects SET
         title = ?,
         tech = ?,
@@ -180,29 +201,29 @@ export const PUT: APIRoute = async ({ request }) => {
         isFeatured = ?,
         isPersonal = ?
       WHERE id = ?
-    `)
-
-    statement.run(
-      data.title,
-      data.tech || '',
-      data.role || '',
-      data.date || '',
-      data.releasedAt || new Date().toISOString().split('T')[0],
-      data.tag || '',
-      data.description || '',
-      data.cover || '',
-      parseArray(data.imgs),
-      data.githubUrl || '',
-      data.projectUrl || '',
-      data.isVideo || 0,
-      data.videoUrl || '',
-      parseArray(data.features),
-      parseArray(data.stack),
-      parseJson(data.awards),
-      parseJson(data.metrics),
-      data.isFeatured || 0,
-      data.isPersonal || 0,
-      id
+    `,
+      [
+        data.title,
+        data.tech || "",
+        data.role || "",
+        data.date || "",
+        data.releasedAt || new Date().toISOString().split("T")[0],
+        data.tag || "",
+        data.description || "",
+        data.cover || "",
+        parseArray(data.imgs),
+        data.githubUrl || "",
+        data.projectUrl || "",
+        data.isVideo || 0,
+        data.videoUrl || "",
+        parseArray(data.features),
+        parseArray(data.stack),
+        parseJson(data.awards),
+        parseJson(data.metrics),
+        data.isFeatured || 0,
+        data.isPersonal || 0,
+        id,
+      ]
     )
 
     return new Response(JSON.stringify({ success: true }), {
@@ -210,7 +231,7 @@ export const PUT: APIRoute = async ({ request }) => {
       headers: { "Content-Type": "application/json" },
     })
   } catch (error) {
-    console.error('Error updating project:', error)
+    console.error("Error updating project:", error)
     return new Response(JSON.stringify({ error: "Failed to update project" }), {
       status: 500,
       headers: { "Content-Type": "application/json" },
@@ -218,8 +239,8 @@ export const PUT: APIRoute = async ({ request }) => {
   }
 }
 
-export const DELETE: APIRoute = async ({ request }) => {
-  const token = request.headers.get('Authorization')?.replace('Bearer ', '')
+export const DELETE: APIRoute = async ({ request, locals }) => {
+  const token = request.headers.get("Authorization")?.replace("Bearer ", "")
 
   if (!verifyToken(token)) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -229,10 +250,11 @@ export const DELETE: APIRoute = async ({ request }) => {
   }
 
   try {
+    const d1 = locals.runtime.env.CF_D1_DB as D1Database
     const body = await request.json()
     const { id } = body
 
-    db.prepare("DELETE FROM projects WHERE id = ?").run(id)
+    await execute(d1, "DELETE FROM projects WHERE id = ?", [id])
 
     return new Response(JSON.stringify({ success: true }), {
       status: 200,

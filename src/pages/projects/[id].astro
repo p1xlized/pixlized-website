@@ -1,45 +1,24 @@
 ---
 import MainLayout from "../../layouts/main.astro"
-import { db } from "../../db/db"
+import { getProjects, getD1 } from "../../db/db"
 import ImageCarousel from "../../components/Projects/ImageCarousel"
 import "@/styles/global.css"
 
+// Get D1 instance from Cloudflare runtime locals
+const d1 = getD1()
+
 const { id } = Astro.params as { id: string }
 
-const rawProject = db
-  .prepare("SELECT * FROM projects WHERE id = ?")
-  .get(Number(id)) as any
+const allProjects = await getProjects(d1)
+const project = allProjects.find((p) => p.id === Number(id))
 
-if (!rawProject) {
+if (!project) {
   return Response.redirect(new URL("/projects", Astro.request.url), 302)
 }
 
-const project = {
-  id: rawProject.id,
-  title: rawProject.title,
-  role: rawProject.role,
-  date: rawProject.date,
-  tag: rawProject.tag as "MOBILE" | "WEB" | "GAME",
-  description: rawProject.description,
-  cover: rawProject.cover,
-  githubUrl: rawProject.githubUrl,
-  projectUrl: rawProject.projectUrl || undefined,
-  videoUrl: rawProject.videoUrl || undefined,
-  isVideo: rawProject.isVideo === 1,
-  isPersonal: rawProject.isPersonal === 1,
-  imgs: rawProject.imgs ? JSON.parse(rawProject.imgs) : [],
-  features: rawProject.features ? JSON.parse(rawProject.features) : [],
-  awards: rawProject.awards ? JSON.parse(rawProject.awards) : [],
-  stack: rawProject.stack ? JSON.parse(rawProject.stack) : [],
-}
-
-const rawAllProjects = db
-  .prepare("SELECT id, title FROM projects ORDER BY releasedAt DESC")
-  .all() as any[]
-
-const allProjects = rawAllProjects.map((row) => ({
-  id: row.id,
-  title: row.title,
+const allProjectsSimple = allProjects.map((p) => ({
+  id: p.id,
+  title: p.title,
 }))
 
 const currentIndex = allProjects.findIndex((p) => p.id === project.id)

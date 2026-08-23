@@ -1,10 +1,11 @@
 ---
 import MainLayout from "@/layouts/main.astro"
-import { db } from "@/db/db"
 ---
 
 <MainLayout>
-  <section class="flex h-full w-full flex-col items-center justify-start py-12 px-4">
+  <section
+    class="flex h-full w-full flex-col items-center justify-start px-4 py-12"
+  >
     <div class="w-full max-w-4xl space-y-6">
       <!-- Header -->
       <div class="flex items-center justify-between">
@@ -12,20 +13,20 @@ import { db } from "@/db/db"
           <h1 class="text-2xl font-bold tracking-tight">
             <span class="font-mono text-[hsl(var(--chart-2))]">📝</span> Blog Posts
           </h1>
-          <p class="mt-1 text-sm text-muted-foreground">
+          <p class="text-muted-foreground mt-1 text-sm">
             Manage your blog content
           </p>
         </div>
         <div class="flex gap-2">
           <a
             href="/admin/blog/new"
-            class="rounded-sm bg-[hsl(var(--chart-2))] px-3 py-1.5 font-mono text-xs font-bold tracking-wider uppercase text-white transition-all hover:bg-[hsl(var(--chart-2))]/90"
+            class="rounded-sm bg-[hsl(var(--chart-2))] px-3 py-1.5 font-mono text-xs font-bold uppercase tracking-wider text-white transition-all hover:bg-[hsl(var(--chart-2))]/90"
           >
             + New Post
           </a>
           <a
             href="/admin/dashboard"
-            class="rounded-sm border border-border bg-secondary/50 px-3 py-1.5 font-mono text-xs font-bold tracking-wider uppercase transition-colors hover:bg-secondary/80"
+            class="border-border bg-secondary/50 hover:bg-secondary/80 rounded-sm border px-3 py-1.5 font-mono text-xs font-bold uppercase tracking-wider transition-colors"
           >
             Back
           </a>
@@ -33,16 +34,19 @@ import { db } from "@/db/db"
       </div>
 
       <!-- Blog Posts List -->
-      <div class="space-y-4 rounded-sm border border-border bg-card p-6">
-        <h2 class="font-mono text-sm font-bold tracking-tight uppercase">
+      <div class="border-border bg-card space-y-4 rounded-sm border p-6">
+        <h2 class="font-mono text-sm font-bold uppercase tracking-tight">
           All Posts
         </h2>
 
         <div id="blog-posts-list" class="space-y-2">
           <!-- Posts will be loaded via JavaScript -->
           <div class="flex items-center justify-center p-8">
-            <div class="animate-spin rounded-full h-6 w-6 border-2 border-primary border-t-transparent"></div>
-            <span class="ml-2 text-sm text-muted-foreground">Loading...</span>
+            <div
+              class="border-primary h-6 w-6 animate-spin rounded-full border-2 border-t-transparent"
+            >
+            </div>
+            <span class="text-muted-foreground ml-2 text-sm">Loading...</span>
           </div>
         </div>
       </div>
@@ -67,20 +71,20 @@ import { db } from "@/db/db"
     })
 
     async function loadBlogPosts() {
-      const token = localStorage.getItem('admin_token')
-      const container = document.getElementById('blog-posts-list')
+      const token = localStorage.getItem("admin_token")
+      const container = document.getElementById("blog-posts-list")
 
       if (!container) return
 
       try {
-        const response = await fetch('/api/admin/blog', {
+        const response = await fetch("/api/admin/blog", {
           headers: {
-            'Authorization': `Bearer ${token}`
-          }
+            Authorization: `Bearer ${token}`,
+          },
         })
 
         if (!response.ok) {
-          throw new Error('Failed to fetch posts')
+          throw new Error("Failed to fetch posts")
         }
 
         const { posts } = await response.json()
@@ -96,14 +100,16 @@ import { db } from "@/db/db"
           return
         }
 
-        container.innerHTML = posts.map((post: any) => `
+        container.innerHTML = posts
+          .map(
+            (post: any) => `
           <div class="flex items-center justify-between rounded-sm p-2 transition-colors hover:bg-secondary/50 border border-border/50">
             <div class="flex items-center gap-3">
               <div class="flex-shrink-0 w-8 h-8 rounded-sm bg-secondary/50 flex items-center justify-center">
                 <span class="font-mono text-xs">📄</span>
               </div>
               <div class="min-w-0 flex-1">
-                <div class="text-sm font-semibold">${post.title || 'Untitled'}</div>
+                <div class="text-sm font-semibold">${post.title || "Untitled"}</div>
                 <div class="font-mono text-[10px] text-muted-foreground">
                   ${post.id} • ${new Date(post.pubDate).toLocaleDateString()}
                 </div>
@@ -130,8 +136,9 @@ import { db } from "@/db/db"
               </button>
             </div>
           </div>
-        `).join('')
-
+        `
+          )
+          .join("")
       } catch (error) {
         container.innerHTML = `
           <div class="flex h-40 shrink-0 items-center justify-center rounded-xs border border-dashed border-border text-center">
@@ -144,28 +151,28 @@ import { db } from "@/db/db"
     }
 
     async function deletePost(id: string) {
-      if (!confirm('Are you sure you want to delete this post?')) return
+      if (!confirm("Are you sure you want to delete this post?")) return
 
-      const token = localStorage.getItem('admin_token')
+      const token = localStorage.getItem("admin_token")
 
       try {
-        const response = await fetch('/api/admin/blog', {
-          method: 'DELETE',
+        const response = await fetch("/api/admin/blog", {
+          method: "DELETE",
           headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({ id })
+          body: JSON.stringify({ id }),
         })
 
         if (response.ok) {
           await loadBlogPosts()
         } else {
           const error = await response.json()
-          alert(error.error || 'Failed to delete post')
+          alert(error.error || "Failed to delete post")
         }
       } catch (err) {
-        alert('Error deleting post: ' + err)
+        alert("Error deleting post: " + err)
       }
     }
   </script>

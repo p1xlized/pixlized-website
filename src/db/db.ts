@@ -1,3 +1,5 @@
+import type { D1Database } from "@cloudflare/workers-types"
+
 export interface Metric {
   label: string
   value: number
@@ -413,7 +415,12 @@ export const INITIAL_PROJECTS: Project[] = [
 // ASYNC D1 DATA ACCESS HELPERS
 // ==========================================
 
-export async function getProjects(d1: D1Database): Promise<Project[]> {
+export async function getProjects(
+  d1: D1Database | undefined
+): Promise<Project[]> {
+  if (!d1) {
+    return INITIAL_PROJECTS
+  }
   const { results } = await d1
     .prepare("SELECT * FROM projects ORDER BY releasedAt DESC")
     .all()
@@ -430,12 +437,92 @@ export async function getProjects(d1: D1Database): Promise<Project[]> {
   }))
 }
 
-export async function getAlbums(d1: D1Database): Promise<Album[]> {
+export async function getAlbums(d1: D1Database | undefined): Promise<Album[]> {
+  if (!d1) {
+    return INITIAL_ALBUMS
+  }
   const { results } = await d1.prepare("SELECT * FROM albums").all()
   return (results as Album[]) || []
 }
 
-export async function getMusicTracks(d1: D1Database): Promise<MusicTrack[]> {
+export async function getMusicTracks(
+  d1: D1Database | undefined
+): Promise<MusicTrack[]> {
+  if (!d1) {
+    return INITIAL_MUSIC_TRACKS
+  }
   const { results } = await d1.prepare("SELECT * FROM music_tracks").all()
   return (results as MusicTrack[]) || []
+}
+
+// Helper function for custom queries
+export async function query(
+  d1: D1Database | undefined,
+  sql: string,
+  params?: any[]
+): Promise<any> {
+  if (!d1) {
+    console.warn("D1 database not available, returning empty array")
+    return []
+  }
+  const statement = d1.prepare(sql)
+  if (params) {
+    return statement.all(...params)
+  }
+  return statement.all()
+}
+
+// Helper function for custom query with single result
+export async function queryOne(
+  d1: D1Database | undefined,
+  sql: string,
+  params?: any[]
+): Promise<any> {
+  if (!d1) {
+    console.warn("D1 database not available, returning undefined")
+    return undefined
+  }
+  const statement = d1.prepare(sql)
+  if (params) {
+    return statement.get(...params)
+  }
+  return statement.get()
+}
+
+// Helper function for insert
+export async function insert(
+  d1: D1Database | undefined,
+  sql: string,
+  params: any[]
+): Promise<{ lastInsertRowid: number }> {
+  if (!d1) {
+    console.warn("D1 database not available, cannot insert")
+    return { lastInsertRowid: -1 }
+  }
+  const statement = d1.prepare(sql)
+  const result = statement.run(...params)
+  return { lastInsertRowid: result.lastInsertRowid }
+}
+
+// Helper function for update/delete
+export async function execute(
+  d1: D1Database | undefined,
+  sql: string,
+  params: any[]
+): Promise<void> {
+  if (!d1) {
+    console.warn("D1 database not available, cannot execute")
+    return
+  }
+  const statement = d1.prepare(sql)
+  statement.run(...params)
+}
+
+// Utility to safely get D1 database from Astro locals
+export function getD1(): D1Database | undefined {
+  // Check if we're in Astro context with locals
+  if (typeof Astro !== "undefined" && Astro.locals?.runtime?.env) {
+    return Astro.locals.runtime.env.CF_D1_DB
+  }
+  return undefined
 }

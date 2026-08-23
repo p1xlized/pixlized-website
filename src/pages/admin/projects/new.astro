@@ -1,14 +1,19 @@
 ---
 import MainLayout from "@/layouts/main.astro"
-import { db } from "@/db/db"
+import { getProjects, getD1 } from "@/db/db"
+
+// Get D1 instance from Cloudflare runtime locals
+const d1 = getD1()
 
 // Get all unique tags for dropdown
-const allTags = db.prepare("SELECT DISTINCT tag FROM projects WHERE tag IS NOT NULL").all() as any[]
-const tagOptions = allTags.map((t) => t.tag).filter(Boolean)
+const projects = await getProjects(d1)
+const tagOptions = [...new Set(projects.map((p) => p.tag).filter(Boolean))]
 ---
 
 <MainLayout>
-  <section class="flex h-full w-full flex-col items-center justify-start py-12 px-4">
+  <section
+    class="flex h-full w-full flex-col items-center justify-start px-4 py-12"
+  >
     <div class="w-full max-w-2xl space-y-6">
       <!-- Header -->
       <div class="flex items-center justify-between">
@@ -31,11 +36,13 @@ const tagOptions = allTags.map((t) => t.tag).filter(Boolean)
       <!-- Form -->
       <form
         id="create-project-form"
-        class="rounded-sm border border-border bg-card p-6 space-y-6 shadow-sm"
+        class="space-y-6 rounded-sm border border-border bg-card p-6 shadow-sm"
       >
         <!-- Title -->
         <div class="space-y-1">
-          <label class="font-mono text-[10px] tracking-wider uppercase text-muted-foreground/80">
+          <label
+            class="font-mono text-[10px] tracking-wider text-muted-foreground/80 uppercase"
+          >
             Title *
           </label>
           <input
@@ -44,13 +51,15 @@ const tagOptions = allTags.map((t) => t.tag).filter(Boolean)
             name="title"
             placeholder="Project name..."
             required
-            class="w-full rounded-sm border border-border bg-secondary/40 px-3 py-2.5 text-sm transition-all focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20"
+            class="w-full rounded-sm border border-border bg-secondary/40 px-3 py-2.5 text-sm transition-all focus:border-primary focus:ring-1 focus:ring-primary/20 focus:outline-none"
           />
         </div>
 
         <!-- Tech Stack -->
         <div class="space-y-1">
-          <label class="font-mono text-[10px] tracking-wider uppercase text-muted-foreground/80">
+          <label
+            class="font-mono text-[10px] tracking-wider text-muted-foreground/80 uppercase"
+          >
             Tech Stack
           </label>
           <input
@@ -58,13 +67,15 @@ const tagOptions = allTags.map((t) => t.tag).filter(Boolean)
             id="project-tech"
             name="tech"
             placeholder="e.g., REACT / NEXT.JS / TAILWIND"
-            class="w-full rounded-sm border border-border bg-secondary/40 px-3 py-2.5 text-sm transition-all focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20"
+            class="w-full rounded-sm border border-border bg-secondary/40 px-3 py-2.5 text-sm transition-all focus:border-primary focus:ring-1 focus:ring-primary/20 focus:outline-none"
           />
         </div>
 
         <!-- Role -->
         <div class="space-y-1">
-          <label class="font-mono text-[10px] tracking-wider uppercase text-muted-foreground/80">
+          <label
+            class="font-mono text-[10px] tracking-wider text-muted-foreground/80 uppercase"
+          >
             Role
           </label>
           <input
@@ -72,13 +83,15 @@ const tagOptions = allTags.map((t) => t.tag).filter(Boolean)
             id="project-role"
             name="role"
             placeholder="e.g., Lead Developer, Designer, etc."
-            class="w-full rounded-sm border border-border bg-secondary/40 px-3 py-2.5 text-sm transition-all focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20"
+            class="w-full rounded-sm border border-border bg-secondary/40 px-3 py-2.5 text-sm transition-all focus:border-primary focus:ring-1 focus:ring-primary/20 focus:outline-none"
           />
         </div>
 
         <!-- Date -->
         <div class="space-y-1">
-          <label class="font-mono text-[10px] tracking-wider uppercase text-muted-foreground/80">
+          <label
+            class="font-mono text-[10px] tracking-wider text-muted-foreground/80 uppercase"
+          >
             Date
           </label>
           <input
@@ -86,37 +99,45 @@ const tagOptions = allTags.map((t) => t.tag).filter(Boolean)
             id="project-date"
             name="date"
             placeholder="e.g., JAN_2025"
-            class="w-full rounded-sm border border-border bg-secondary/40 px-3 py-2.5 text-sm transition-all focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20"
+            class="w-full rounded-sm border border-border bg-secondary/40 px-3 py-2.5 text-sm transition-all focus:border-primary focus:ring-1 focus:ring-primary/20 focus:outline-none"
           />
         </div>
 
         <!-- Released At -->
         <div class="space-y-1">
-          <label class="font-mono text-[10px] tracking-wider uppercase text-muted-foreground/80">
+          <label
+            class="font-mono text-[10px] tracking-wider text-muted-foreground/80 uppercase"
+          >
             Release Date (YYYY-MM-DD)
           </label>
           <input
             type="date"
             id="project-releasedAt"
             name="releasedAt"
-            class="w-full rounded-sm border border-border bg-secondary/40 px-3 py-2.5 text-sm transition-all focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20"
+            class="w-full rounded-sm border border-border bg-secondary/40 px-3 py-2.5 text-sm transition-all focus:border-primary focus:ring-1 focus:ring-primary/20 focus:outline-none"
           />
         </div>
 
         <!-- Tag -->
         <div class="space-y-1">
-          <label class="font-mono text-[10px] tracking-wider uppercase text-muted-foreground/80">
+          <label
+            class="font-mono text-[10px] tracking-wider text-muted-foreground/80 uppercase"
+          >
             Tag
           </label>
           <select
             id="project-tag"
             name="tag"
-            class="w-full rounded-sm border border-border bg-secondary/40 px-3 py-2.5 text-sm transition-all focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20"
+            class="w-full rounded-sm border border-border bg-secondary/40 px-3 py-2.5 text-sm transition-all focus:border-primary focus:ring-1 focus:ring-primary/20 focus:outline-none"
           >
             <option value="">Select a tag...</option>
-            {tagOptions.map((tag) => (
-              <option key={tag} value={tag}>{tag}</option>
-            ))}
+            {
+              tagOptions.map((tag) => (
+                <option key={tag} value={tag}>
+                  {tag}
+                </option>
+              ))
+            }
             <option value="MOBILE">MOBILE</option>
             <option value="WEB">WEB</option>
             <option value="GAME">GAME</option>
@@ -125,7 +146,9 @@ const tagOptions = allTags.map((t) => t.tag).filter(Boolean)
 
         <!-- Description -->
         <div class="space-y-1">
-          <label class="font-mono text-[10px] tracking-wider uppercase text-muted-foreground/80">
+          <label
+            class="font-mono text-[10px] tracking-wider text-muted-foreground/80 uppercase"
+          >
             Description
           </label>
           <textarea
@@ -133,13 +156,15 @@ const tagOptions = allTags.map((t) => t.tag).filter(Boolean)
             name="description"
             rows={4}
             placeholder="Project description..."
-            class="w-full rounded-sm border border-border bg-secondary/40 px-3 py-2.5 text-sm transition-all focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20 resize-none"
-          />
+            class="w-full resize-none rounded-sm border border-border bg-secondary/40 px-3 py-2.5 text-sm transition-all focus:border-primary focus:ring-1 focus:ring-primary/20 focus:outline-none"
+          ></textarea>
         </div>
 
         <!-- Cover Image Upload -->
         <div class="space-y-1">
-          <label class="font-mono text-[10px] tracking-wider uppercase text-muted-foreground/80">
+          <label
+            class="font-mono text-[10px] tracking-wider text-muted-foreground/80 uppercase"
+          >
             Cover Image
           </label>
           <div class="flex gap-2">
@@ -147,7 +172,7 @@ const tagOptions = allTags.map((t) => t.tag).filter(Boolean)
               type="file"
               id="project-cover-upload"
               accept="image/*"
-              class="flex-1 rounded-sm border border-border bg-secondary/40 px-3 py-2 text-sm file:mr-2 file:rounded-sm file:border-0 file:bg-primary/10 file:px-3 file:py-1 file:text-sm file:font-mono file:text-primary"
+              class="flex-1 rounded-sm border border-border bg-secondary/40 px-3 py-2 text-sm file:mr-2 file:rounded-sm file:border-0 file:bg-primary/10 file:px-3 file:py-1 file:font-mono file:text-sm file:text-primary"
             />
             <button
               type="button"
@@ -162,14 +187,16 @@ const tagOptions = allTags.map((t) => t.tag).filter(Boolean)
             id="project-cover"
             name="cover"
             placeholder="https://example.com/image.jpg"
-            class="w-full rounded-sm border border-border bg-secondary/40 px-3 py-2.5 text-sm transition-all focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20 mt-2"
+            class="mt-2 w-full rounded-sm border border-border bg-secondary/40 px-3 py-2.5 text-sm transition-all focus:border-primary focus:ring-1 focus:ring-primary/20 focus:outline-none"
           />
           <div id="project-cover-upload-preview" class="mt-2"></div>
         </div>
 
         <!-- Images Upload -->
         <div class="space-y-1">
-          <label class="font-mono text-[10px] tracking-wider uppercase text-muted-foreground/80">
+          <label
+            class="font-mono text-[10px] tracking-wider text-muted-foreground/80 uppercase"
+          >
             Gallery Images
           </label>
           <div class="flex gap-2">
@@ -178,7 +205,7 @@ const tagOptions = allTags.map((t) => t.tag).filter(Boolean)
               id="project-imgs-upload"
               accept="image/*"
               multiple
-              class="flex-1 rounded-sm border border-border bg-secondary/40 px-3 py-2 text-sm file:mr-2 file:rounded-sm file:border-0 file:bg-primary/10 file:px-3 file:py-1 file:text-sm file:font-mono file:text-primary"
+              class="flex-1 rounded-sm border border-border bg-secondary/40 px-3 py-2 text-sm file:mr-2 file:rounded-sm file:border-0 file:bg-primary/10 file:px-3 file:py-1 file:font-mono file:text-sm file:text-primary"
             />
             <button
               type="button"
@@ -193,17 +220,23 @@ const tagOptions = allTags.map((t) => t.tag).filter(Boolean)
             id="project-imgs"
             name="imgs"
             placeholder="https://example.com/img1.jpg, https://example.com/img2.jpg"
-            class="w-full rounded-sm border border-border bg-secondary/40 px-3 py-2.5 text-sm transition-all focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20 mt-2"
+            class="mt-2 w-full rounded-sm border border-border bg-secondary/40 px-3 py-2.5 text-sm transition-all focus:border-primary focus:ring-1 focus:ring-primary/20 focus:outline-none"
           />
           <p class="font-mono text-[10px] text-muted-foreground/60">
             Enter image URLs separated by commas, or upload multiple files
           </p>
-          <div id="project-imgs-upload-preview" class="mt-2 grid grid-cols-3 gap-2"></div>
+          <div
+            id="project-imgs-upload-preview"
+            class="mt-2 grid grid-cols-3 gap-2"
+          >
+          </div>
         </div>
 
         <!-- GitHub URL -->
         <div class="space-y-1">
-          <label class="font-mono text-[10px] tracking-wider uppercase text-muted-foreground/80">
+          <label
+            class="font-mono text-[10px] tracking-wider text-muted-foreground/80 uppercase"
+          >
             GitHub URL
           </label>
           <input
@@ -211,13 +244,15 @@ const tagOptions = allTags.map((t) => t.tag).filter(Boolean)
             id="project-githubUrl"
             name="githubUrl"
             placeholder="https://github.com/username/repo"
-            class="w-full rounded-sm border border-border bg-secondary/40 px-3 py-2.5 text-sm transition-all focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20"
+            class="w-full rounded-sm border border-border bg-secondary/40 px-3 py-2.5 text-sm transition-all focus:border-primary focus:ring-1 focus:ring-primary/20 focus:outline-none"
           />
         </div>
 
         <!-- Project URL -->
         <div class="space-y-1">
-          <label class="font-mono text-[10px] tracking-wider uppercase text-muted-foreground/80">
+          <label
+            class="font-mono text-[10px] tracking-wider text-muted-foreground/80 uppercase"
+          >
             Live URL
           </label>
           <input
@@ -225,13 +260,15 @@ const tagOptions = allTags.map((t) => t.tag).filter(Boolean)
             id="project-projectUrl"
             name="projectUrl"
             placeholder="https://project-demo.com"
-            class="w-full rounded-sm border border-border bg-secondary/40 px-3 py-2.5 text-sm transition-all focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20"
+            class="w-full rounded-sm border border-border bg-secondary/40 px-3 py-2.5 text-sm transition-all focus:border-primary focus:ring-1 focus:ring-primary/20 focus:outline-none"
           />
         </div>
 
         <!-- Features (comma-separated) -->
         <div class="space-y-1">
-          <label class="font-mono text-[10px] tracking-wider uppercase text-muted-foreground/80">
+          <label
+            class="font-mono text-[10px] tracking-wider text-muted-foreground/80 uppercase"
+          >
             Features (comma-separated)
           </label>
           <input
@@ -239,13 +276,15 @@ const tagOptions = allTags.map((t) => t.tag).filter(Boolean)
             id="project-features"
             name="features"
             placeholder="Feature 1, Feature 2, Feature 3"
-            class="w-full rounded-sm border border-border bg-secondary/40 px-3 py-2.5 text-sm transition-all focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20"
+            class="w-full rounded-sm border border-border bg-secondary/40 px-3 py-2.5 text-sm transition-all focus:border-primary focus:ring-1 focus:ring-primary/20 focus:outline-none"
           />
         </div>
 
         <!-- Stack (comma-separated) -->
         <div class="space-y-1">
-          <label class="font-mono text-[10px] tracking-wider uppercase text-muted-foreground/80">
+          <label
+            class="font-mono text-[10px] tracking-wider text-muted-foreground/80 uppercase"
+          >
             Stack (comma-separated)
           </label>
           <input
@@ -253,13 +292,15 @@ const tagOptions = allTags.map((t) => t.tag).filter(Boolean)
             id="project-stack"
             name="stack"
             placeholder="React, Next.js, Tailwind"
-            class="w-full rounded-sm border border-border bg-secondary/40 px-3 py-2.5 text-sm transition-all focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20"
+            class="w-full rounded-sm border border-border bg-secondary/40 px-3 py-2.5 text-sm transition-all focus:border-primary focus:ring-1 focus:ring-primary/20 focus:outline-none"
           />
         </div>
 
         <!-- Awards (JSON) -->
         <div class="space-y-1">
-          <label class="font-mono text-[10px] tracking-wider uppercase text-muted-foreground/80">
+          <label
+            class="font-mono text-[10px] tracking-wider text-muted-foreground/80 uppercase"
+          >
             Awards (JSON format)
           </label>
           <textarea
@@ -267,13 +308,15 @@ const tagOptions = allTags.map((t) => t.tag).filter(Boolean)
             name="awards"
             rows={3}
             placeholder='[{"title": "Award Name", "organization": "Org"}]'
-            class="w-full rounded-sm border border-border bg-secondary/40 px-3 py-2.5 text-sm transition-all focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20 resize-none font-mono text-[10px]"
-          />
+            class="w-full resize-none rounded-sm border border-border bg-secondary/40 px-3 py-2.5 font-mono text-sm text-[10px] transition-all focus:border-primary focus:ring-1 focus:ring-primary/20 focus:outline-none"
+          ></textarea>
         </div>
 
         <!-- Metrics (JSON) -->
         <div class="space-y-1">
-          <label class="font-mono text-[10px] tracking-wider uppercase text-muted-foreground/80">
+          <label
+            class="font-mono text-[10px] tracking-wider text-muted-foreground/80 uppercase"
+          >
             Metrics (JSON format)
           </label>
           <textarea
@@ -281,21 +324,37 @@ const tagOptions = allTags.map((t) => t.tag).filter(Boolean)
             name="metrics"
             rows={3}
             placeholder='[{"label": "METRIC", "value": 100}]'
-            class="w-full rounded-sm border border-border bg-secondary/40 px-3 py-2.5 text-sm transition-all focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20 resize-none font-mono text-[10px]"
-          />
+            class="w-full resize-none rounded-sm border border-border bg-secondary/40 px-3 py-2.5 font-mono text-sm text-[10px] transition-all focus:border-primary focus:ring-1 focus:ring-primary/20 focus:outline-none"
+          ></textarea>
         </div>
 
         <!-- Featured & Personal -->
         <div class="grid grid-cols-2 gap-4">
           <div class="space-y-1">
-            <label class="flex items-center gap-2 font-mono text-[10px] tracking-wider uppercase text-muted-foreground/80">
-              <input type="checkbox" id="project-isFeatured" name="isFeatured" value="1" class="h-3 w-3" />
+            <label
+              class="flex items-center gap-2 font-mono text-[10px] tracking-wider text-muted-foreground/80 uppercase"
+            >
+              <input
+                type="checkbox"
+                id="project-isFeatured"
+                name="isFeatured"
+                value="1"
+                class="h-3 w-3"
+              />
               Featured
             </label>
           </div>
           <div class="space-y-1">
-            <label class="flex items-center gap-2 font-mono text-[10px] tracking-wider uppercase text-muted-foreground/80">
-              <input type="checkbox" id="project-isPersonal" name="isPersonal" value="1" class="h-3 w-3" />
+            <label
+              class="flex items-center gap-2 font-mono text-[10px] tracking-wider text-muted-foreground/80 uppercase"
+            >
+              <input
+                type="checkbox"
+                id="project-isPersonal"
+                name="isPersonal"
+                value="1"
+                class="h-3 w-3"
+              />
               Personal
             </label>
           </div>
@@ -305,7 +364,7 @@ const tagOptions = allTags.map((t) => t.tag).filter(Boolean)
         <div class="flex gap-2">
           <button
             type="submit"
-            class="flex-1 rounded-sm bg-[hsl(var(--chart-1))] py-2.5 font-mono text-sm font-bold tracking-wider uppercase text-white transition-all hover:bg-[hsl(var(--chart-1))]/90"
+            class="flex-1 rounded-sm bg-[hsl(var(--chart-1))] py-2.5 font-mono text-sm font-bold tracking-wider text-white uppercase transition-all hover:bg-[hsl(var(--chart-1))]/90"
           >
             Create Project
           </button>
@@ -333,79 +392,116 @@ const tagOptions = allTags.map((t) => t.tag).filter(Boolean)
       }
 
       // Form submission
-      const form = document.getElementById('create-project-form')
-      form?.addEventListener('submit', async (e) => {
+      const form = document.getElementById("create-project-form")
+      form?.addEventListener("submit", async (e) => {
         e.preventDefault()
 
         // Collect form data
         const formData = {
-          title: (document.getElementById('project-title') as HTMLInputElement).value,
-          tech: (document.getElementById('project-tech') as HTMLInputElement).value,
-          role: (document.getElementById('project-role') as HTMLInputElement).value,
-          date: (document.getElementById('project-date') as HTMLInputElement).value,
-          releasedAt: (document.getElementById('project-releasedAt') as HTMLInputElement).value,
-          tag: (document.getElementById('project-tag') as HTMLInputElement).value,
-          description: (document.getElementById('project-description') as HTMLTextAreaElement).value,
-          cover: (document.getElementById('project-cover') as HTMLInputElement).value,
-          imgs: (document.getElementById('project-imgs') as HTMLInputElement).value,
-          githubUrl: (document.getElementById('project-githubUrl') as HTMLInputElement).value,
-          projectUrl: (document.getElementById('project-projectUrl') as HTMLInputElement).value,
-          features: (document.getElementById('project-features') as HTMLInputElement).value,
-          stack: (document.getElementById('project-stack') as HTMLInputElement).value,
-          awards: (document.getElementById('project-awards') as HTMLTextAreaElement).value,
-          metrics: (document.getElementById('project-metrics') as HTMLTextAreaElement).value,
-          isFeatured: (document.getElementById('project-isFeatured') as HTMLInputElement).checked ? 1 : 0,
-          isPersonal: (document.getElementById('project-isPersonal') as HTMLInputElement).checked ? 1 : 0,
+          title: (document.getElementById("project-title") as HTMLInputElement)
+            .value,
+          tech: (document.getElementById("project-tech") as HTMLInputElement)
+            .value,
+          role: (document.getElementById("project-role") as HTMLInputElement)
+            .value,
+          date: (document.getElementById("project-date") as HTMLInputElement)
+            .value,
+          releasedAt: (
+            document.getElementById("project-releasedAt") as HTMLInputElement
+          ).value,
+          tag: (document.getElementById("project-tag") as HTMLInputElement)
+            .value,
+          description: (
+            document.getElementById(
+              "project-description"
+            ) as HTMLTextAreaElement
+          ).value,
+          cover: (document.getElementById("project-cover") as HTMLInputElement)
+            .value,
+          imgs: (document.getElementById("project-imgs") as HTMLInputElement)
+            .value,
+          githubUrl: (
+            document.getElementById("project-githubUrl") as HTMLInputElement
+          ).value,
+          projectUrl: (
+            document.getElementById("project-projectUrl") as HTMLInputElement
+          ).value,
+          features: (
+            document.getElementById("project-features") as HTMLInputElement
+          ).value,
+          stack: (document.getElementById("project-stack") as HTMLInputElement)
+            .value,
+          awards: (
+            document.getElementById("project-awards") as HTMLTextAreaElement
+          ).value,
+          metrics: (
+            document.getElementById("project-metrics") as HTMLTextAreaElement
+          ).value,
+          isFeatured: (
+            document.getElementById("project-isFeatured") as HTMLInputElement
+          ).checked
+            ? 1
+            : 0,
+          isPersonal: (
+            document.getElementById("project-isPersonal") as HTMLInputElement
+          ).checked
+            ? 1
+            : 0,
         }
 
         try {
-          const response = await fetch('/api/admin/projects', {
-            method: 'POST',
+          const response = await fetch("/api/admin/projects", {
+            method: "POST",
             headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem("admin_token")}`,
             },
-            body: JSON.stringify(formData)
+            body: JSON.stringify(formData),
           })
 
           if (response.ok) {
-            window.location.href = '/admin/projects'
+            window.location.href = "/admin/projects"
           } else {
             const error = await response.json()
-            alert(error.error || 'Failed to create project')
+            alert(error.error || "Failed to create project")
           }
         } catch (err) {
-          alert('Error creating project: ' + err)
+          alert("Error creating project: " + err)
         }
       })
     })
 
     // File upload function
-    async function uploadFile(inputId: string, urlInputId: string, fileType: string, dir: string) {
+    async function uploadFile(
+      inputId: string,
+      urlInputId: string,
+      fileType: string,
+      dir: string
+    ) {
       const fileInput = document.getElementById(inputId) as HTMLInputElement
       const urlInput = document.getElementById(urlInputId) as HTMLInputElement
       const previewContainer = document.getElementById(`${inputId}-preview`)
 
       if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
-        alert('Please select a file first')
+        alert("Please select a file first")
         return
       }
 
       const file = fileInput.files[0]
-      const token = localStorage.getItem('admin_token')
+      const token = localStorage.getItem("admin_token")
 
       try {
         const formData = new FormData()
-        formData.append('file', file)
-        formData.append('type', fileType)
-        formData.append('dir', dir)
+        formData.append("file", file)
+        formData.append("type", fileType)
+        formData.append("dir", dir)
 
-        const response = await fetch('/api/upload', {
-          method: 'POST',
+        const response = await fetch("/api/upload", {
+          method: "POST",
           headers: {
-            'Authorization': `Bearer ${token}`
+            Authorization: `Bearer ${token}`,
           },
-          body: formData
+          body: formData,
         })
 
         if (response.ok) {
@@ -413,7 +509,7 @@ const tagOptions = allTags.map((t) => t.tag).filter(Boolean)
           urlInput.value = result.url
 
           // Show preview for images
-          if (fileType === 'image' && previewContainer) {
+          if (fileType === "image" && previewContainer) {
             previewContainer.innerHTML = `
               <div class="relative">
                 <img src="${result.url}" class="h-32 w-auto rounded-sm object-cover" />
@@ -427,43 +523,48 @@ const tagOptions = allTags.map((t) => t.tag).filter(Boolean)
             `
           }
 
-          alert('File uploaded successfully!')
+          alert("File uploaded successfully!")
         } else {
           const error = await response.json()
-          alert(error.error || 'Failed to upload file')
+          alert(error.error || "Failed to upload file")
         }
       } catch (err) {
-        alert('Error uploading file: ' + err)
+        alert("Error uploading file: " + err)
       }
     }
 
     // Multiple files upload
-    async function uploadMultipleFiles(inputId: string, urlInputId: string, fileType: string, dir: string) {
+    async function uploadMultipleFiles(
+      inputId: string,
+      urlInputId: string,
+      fileType: string,
+      dir: string
+    ) {
       const fileInput = document.getElementById(inputId) as HTMLInputElement
       const urlInput = document.getElementById(urlInputId) as HTMLInputElement
       const previewContainer = document.getElementById(`${inputId}-preview`)
 
       if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
-        alert('Please select at least one file')
+        alert("Please select at least one file")
         return
       }
 
-      const token = localStorage.getItem('admin_token')
+      const token = localStorage.getItem("admin_token")
       const uploadedUrls: string[] = []
 
       try {
         for (const file of fileInput.files) {
           const formData = new FormData()
-          formData.append('file', file)
-          formData.append('type', fileType)
-          formData.append('dir', dir)
+          formData.append("file", file)
+          formData.append("type", fileType)
+          formData.append("dir", dir)
 
-          const response = await fetch('/api/upload', {
-            method: 'POST',
+          const response = await fetch("/api/upload", {
+            method: "POST",
             headers: {
-              'Authorization': `Bearer ${token}`
+              Authorization: `Bearer ${token}`,
             },
-            body: formData
+            body: formData,
           })
 
           if (response.ok) {
@@ -471,7 +572,7 @@ const tagOptions = allTags.map((t) => t.tag).filter(Boolean)
             uploadedUrls.push(result.url)
 
             // Show preview for images
-            if (fileType === 'image' && previewContainer) {
+            if (fileType === "image" && previewContainer) {
               previewContainer.innerHTML += `
                 <div class="relative">
                   <img src="${result.url}" class="h-20 w-full rounded-sm object-cover" />
@@ -486,44 +587,56 @@ const tagOptions = allTags.map((t) => t.tag).filter(Boolean)
             }
           } else {
             const error = await response.json()
-            alert(error.error || 'Failed to upload one or more files')
+            alert(error.error || "Failed to upload one or more files")
             return
           }
         }
 
         // Set all URLs in the input
         if (urlInput) {
-          urlInput.value = uploadedUrls.join(', ')
+          urlInput.value = uploadedUrls.join(", ")
         }
 
         alert(`${uploadedUrls.length} file(s) uploaded successfully!`)
       } catch (err) {
-        alert('Error uploading files: ' + err)
+        alert("Error uploading files: " + err)
       }
     }
 
-    function clearUpload(inputId: string, urlInputId: string, previewId: string) {
+    function clearUpload(
+      inputId: string,
+      urlInputId: string,
+      previewId: string
+    ) {
       const fileInput = document.getElementById(inputId) as HTMLInputElement
       const urlInput = document.getElementById(urlInputId) as HTMLInputElement
       const previewContainer = document.getElementById(previewId)
 
-      if (fileInput) fileInput.value = ''
-      if (urlInput) urlInput.value = ''
-      if (previewContainer) previewContainer.innerHTML = ''
+      if (fileInput) fileInput.value = ""
+      if (urlInput) urlInput.value = ""
+      if (previewContainer) previewContainer.innerHTML = ""
     }
 
-    function removeImageFromGallery(url: string, inputId: string, urlInputId: string, previewId: string) {
+    function removeImageFromGallery(
+      url: string,
+      inputId: string,
+      urlInputId: string,
+      previewId: string
+    ) {
       const urlInput = document.getElementById(urlInputId) as HTMLInputElement
       const previewContainer = document.getElementById(previewId)
 
       if (urlInput) {
-        const urls = urlInput.value.split(',').map(u => u.trim()).filter(u => u !== url)
-        urlInput.value = urls.join(', ')
+        const urls = urlInput.value
+          .split(",")
+          .map((u) => u.trim())
+          .filter((u) => u !== url)
+        urlInput.value = urls.join(", ")
       }
 
       // Remove from preview - this is a simple approach
       if (previewContainer) {
-        previewContainer.innerHTML = ''
+        previewContainer.innerHTML = ""
         // In a real implementation, you'd find and remove just the specific image
         // For now, we'll just clear and let user re-upload if needed
       }
