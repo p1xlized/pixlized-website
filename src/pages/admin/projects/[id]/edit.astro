@@ -1,39 +1,28 @@
 ---
 import MainLayout from "@/layouts/main.astro"
-import { db } from "@/db/db"
+import { getProjects, getD1 } from "@/db/db"
+
+// Get D1 instance from Cloudflare runtime locals
+const d1 = getD1()
 
 const { id } = Astro.params
 
-// Get project by ID
-const project = db.prepare("SELECT * FROM projects WHERE id = ?").get(Number(id)) as any
+// Get all projects
+const projects = await getProjects(d1)
+const project = projects.find((p) => p.id === Number(id))
 
 if (!project) {
   return Response.redirect(new URL("/admin/projects", Astro.request.url), 302)
 }
 
-// Parse JSON arrays for display
-const parseJson = (value: string | null): any[] => {
-  if (!value) return []
-  try {
-    return JSON.parse(value)
-  } catch {
-    return []
-  }
-}
-
-const imgs = parseJson(project.imgs)
-const features = parseJson(project.features)
-const stack = parseJson(project.stack)
-const awards = parseJson(project.awards)
-const metrics = parseJson(project.metrics)
-
 // Get all unique tags for dropdown
-const allTags = db.prepare("SELECT DISTINCT tag FROM projects WHERE tag IS NOT NULL").all() as any[]
-const tagOptions = allTags.map((t) => t.tag).filter(Boolean)
+const tagOptions = [...new Set(projects.map((p) => p.tag).filter(Boolean))]
 ---
 
 <MainLayout>
-  <section class="flex h-full w-full flex-col items-center justify-start py-12 px-4">
+  <section
+    class="flex h-full w-full flex-col items-center justify-start px-4 py-12"
+  >
     <div class="w-full max-w-2xl space-y-6">
       <!-- Header -->
       <div class="flex items-center justify-between">
@@ -56,13 +45,15 @@ const tagOptions = allTags.map((t) => t.tag).filter(Boolean)
       <!-- Form -->
       <form
         id="edit-project-form"
-        class="rounded-sm border border-border bg-card p-6 space-y-6 shadow-sm"
+        class="space-y-6 rounded-sm border border-border bg-card p-6 shadow-sm"
       >
         <input type="hidden" id="project-id" value={project.id} />
 
         <!-- Title -->
         <div class="space-y-1">
-          <label class="font-mono text-[10px] tracking-wider uppercase text-muted-foreground/80">
+          <label
+            class="font-mono text-[10px] tracking-wider text-muted-foreground/80 uppercase"
+          >
             Title *
           </label>
           <input
@@ -71,124 +62,147 @@ const tagOptions = allTags.map((t) => t.tag).filter(Boolean)
             name="title"
             value={project.title}
             required
-            class="w-full rounded-sm border border-border bg-secondary/40 px-3 py-2.5 text-sm transition-all focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20"
+            class="w-full rounded-sm border border-border bg-secondary/40 px-3 py-2.5 text-sm transition-all focus:border-primary focus:ring-1 focus:ring-primary/20 focus:outline-none"
           />
         </div>
 
         <!-- Tech Stack -->
         <div class="space-y-1">
-          <label class="font-mono text-[10px] tracking-wider uppercase text-muted-foreground/80">
+          <label
+            class="font-mono text-[10px] tracking-wider text-muted-foreground/80 uppercase"
+          >
             Tech Stack
           </label>
           <input
             type="text"
             id="project-tech"
             name="tech"
-            value={project.tech || ''}
-            class="w-full rounded-sm border border-border bg-secondary/40 px-3 py-2.5 text-sm transition-all focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20"
+            value={project.tech || ""}
+            class="w-full rounded-sm border border-border bg-secondary/40 px-3 py-2.5 text-sm transition-all focus:border-primary focus:ring-1 focus:ring-primary/20 focus:outline-none"
           />
         </div>
 
         <!-- Role -->
         <div class="space-y-1">
-          <label class="font-mono text-[10px] tracking-wider uppercase text-muted-foreground/80">
+          <label
+            class="font-mono text-[10px] tracking-wider text-muted-foreground/80 uppercase"
+          >
             Role
           </label>
           <input
             type="text"
             id="project-role"
             name="role"
-            value={project.role || ''}
-            class="w-full rounded-sm border border-border bg-secondary/40 px-3 py-2.5 text-sm transition-all focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20"
+            value={project.role || ""}
+            class="w-full rounded-sm border border-border bg-secondary/40 px-3 py-2.5 text-sm transition-all focus:border-primary focus:ring-1 focus:ring-primary/20 focus:outline-none"
           />
         </div>
 
         <!-- Date -->
         <div class="space-y-1">
-          <label class="font-mono text-[10px] tracking-wider uppercase text-muted-foreground/80">
+          <label
+            class="font-mono text-[10px] tracking-wider text-muted-foreground/80 uppercase"
+          >
             Date
           </label>
           <input
             type="text"
             id="project-date"
             name="date"
-            value={project.date || ''}
-            class="w-full rounded-sm border border-border bg-secondary/40 px-3 py-2.5 text-sm transition-all focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20"
+            value={project.date || ""}
+            class="w-full rounded-sm border border-border bg-secondary/40 px-3 py-2.5 text-sm transition-all focus:border-primary focus:ring-1 focus:ring-primary/20 focus:outline-none"
           />
         </div>
 
         <!-- Released At -->
         <div class="space-y-1">
-          <label class="font-mono text-[10px] tracking-wider uppercase text-muted-foreground/80">
+          <label
+            class="font-mono text-[10px] tracking-wider text-muted-foreground/80 uppercase"
+          >
             Release Date (YYYY-MM-DD)
           </label>
           <input
             type="date"
             id="project-releasedAt"
             name="releasedAt"
-            value={project.releasedAt || ''}
-            class="w-full rounded-sm border border-border bg-secondary/40 px-3 py-2.5 text-sm transition-all focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20"
+            value={project.releasedAt || ""}
+            class="w-full rounded-sm border border-border bg-secondary/40 px-3 py-2.5 text-sm transition-all focus:border-primary focus:ring-1 focus:ring-primary/20 focus:outline-none"
           />
         </div>
 
         <!-- Tag -->
         <div class="space-y-1">
-          <label class="font-mono text-[10px] tracking-wider uppercase text-muted-foreground/80">
+          <label
+            class="font-mono text-[10px] tracking-wider text-muted-foreground/80 uppercase"
+          >
             Tag
           </label>
           <select
             id="project-tag"
             name="tag"
-            class="w-full rounded-sm border border-border bg-secondary/40 px-3 py-2.5 text-sm transition-all focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20"
+            class="w-full rounded-sm border border-border bg-secondary/40 px-3 py-2.5 text-sm transition-all focus:border-primary focus:ring-1 focus:ring-primary/20 focus:outline-none"
           >
             <option value="">Select a tag...</option>
-            {tagOptions.map((tag) => (
-              <option key={tag} value={tag} selected={project.tag === tag}>{tag}</option>
-            ))}
-            <option value="MOBILE" selected={project.tag === 'MOBILE'}>MOBILE</option>
-            <option value="WEB" selected={project.tag === 'WEB'}>WEB</option>
-            <option value="GAME" selected={project.tag === 'GAME'}>GAME</option>
+            {
+              tagOptions.map((tag) => (
+                <option key={tag} value={tag} selected={project.tag === tag}>
+                  {tag}
+                </option>
+              ))
+            }
+            <option value="MOBILE" selected={project.tag === "MOBILE"}
+              >MOBILE</option
+            >
+            <option value="WEB" selected={project.tag === "WEB"}>WEB</option>
+            <option value="GAME" selected={project.tag === "GAME"}>GAME</option>
           </select>
         </div>
 
         <!-- Description -->
         <div class="space-y-1">
-          <label class="font-mono text-[10px] tracking-wider uppercase text-muted-foreground/80">
+          <label
+            class="font-mono text-[10px] tracking-wider text-muted-foreground/80 uppercase"
+          >
             Description
           </label>
           <textarea
             id="project-description"
             name="description"
             rows={4}
-            class="w-full rounded-sm border border-border bg-secondary/40 px-3 py-2.5 text-sm transition-all focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20 resize-none"
-          >{project.description || ''}</textarea>
+            class="w-full resize-none rounded-sm border border-border bg-secondary/40 px-3 py-2.5 text-sm transition-all focus:border-primary focus:ring-1 focus:ring-primary/20 focus:outline-none"
+            >{project.description || ""}</textarea
+          >
         </div>
 
         <!-- Cover Image URL -->
         <div class="space-y-1">
-          <label class="font-mono text-[10px] tracking-wider uppercase text-muted-foreground/80">
+          <label
+            class="font-mono text-[10px] tracking-wider text-muted-foreground/80 uppercase"
+          >
             Cover Image URL
           </label>
           <input
             type="text"
             id="project-cover"
             name="cover"
-            value={project.cover || ''}
-            class="w-full rounded-sm border border-border bg-secondary/40 px-3 py-2.5 text-sm transition-all focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20"
+            value={project.cover || ""}
+            class="w-full rounded-sm border border-border bg-secondary/40 px-3 py-2.5 text-sm transition-all focus:border-primary focus:ring-1 focus:ring-primary/20 focus:outline-none"
           />
         </div>
 
         <!-- Images (comma-separated) -->
         <div class="space-y-1">
-          <label class="font-mono text-[10px] tracking-wider uppercase text-muted-foreground/80">
+          <label
+            class="font-mono text-[10px] tracking-wider text-muted-foreground/80 uppercase"
+          >
             Images (comma-separated URLs)
           </label>
           <input
             type="text"
             id="project-imgs"
             name="imgs"
-            value={imgs.join(', ')}
-            class="w-full rounded-sm border border-border bg-secondary/40 px-3 py-2.5 text-sm transition-all focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20"
+            value={imgs.join(", ")}
+            class="w-full rounded-sm border border-border bg-secondary/40 px-3 py-2.5 text-sm transition-all focus:border-primary focus:ring-1 focus:ring-primary/20 focus:outline-none"
           />
           <p class="font-mono text-[10px] text-muted-foreground/60">
             Enter image URLs separated by commas
@@ -197,97 +211,129 @@ const tagOptions = allTags.map((t) => t.tag).filter(Boolean)
 
         <!-- GitHub URL -->
         <div class="space-y-1">
-          <label class="font-mono text-[10px] tracking-wider uppercase text-muted-foreground/80">
+          <label
+            class="font-mono text-[10px] tracking-wider text-muted-foreground/80 uppercase"
+          >
             GitHub URL
           </label>
           <input
             type="url"
             id="project-githubUrl"
             name="githubUrl"
-            value={project.githubUrl || ''}
-            class="w-full rounded-sm border border-border bg-secondary/40 px-3 py-2.5 text-sm transition-all focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20"
+            value={project.githubUrl || ""}
+            class="w-full rounded-sm border border-border bg-secondary/40 px-3 py-2.5 text-sm transition-all focus:border-primary focus:ring-1 focus:ring-primary/20 focus:outline-none"
           />
         </div>
 
         <!-- Project URL -->
         <div class="space-y-1">
-          <label class="font-mono text-[10px] tracking-wider uppercase text-muted-foreground/80">
+          <label
+            class="font-mono text-[10px] tracking-wider text-muted-foreground/80 uppercase"
+          >
             Live URL
           </label>
           <input
             type="url"
             id="project-projectUrl"
             name="projectUrl"
-            value={project.projectUrl || ''}
-            class="w-full rounded-sm border border-border bg-secondary/40 px-3 py-2.5 text-sm transition-all focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20"
+            value={project.projectUrl || ""}
+            class="w-full rounded-sm border border-border bg-secondary/40 px-3 py-2.5 text-sm transition-all focus:border-primary focus:ring-1 focus:ring-primary/20 focus:outline-none"
           />
         </div>
 
         <!-- Features (comma-separated) -->
         <div class="space-y-1">
-          <label class="font-mono text-[10px] tracking-wider uppercase text-muted-foreground/80">
+          <label
+            class="font-mono text-[10px] tracking-wider text-muted-foreground/80 uppercase"
+          >
             Features (comma-separated)
           </label>
           <input
             type="text"
             id="project-features"
             name="features"
-            value={features.join(', ')}
-            class="w-full rounded-sm border border-border bg-secondary/40 px-3 py-2.5 text-sm transition-all focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20"
+            value={features.join(", ")}
+            class="w-full rounded-sm border border-border bg-secondary/40 px-3 py-2.5 text-sm transition-all focus:border-primary focus:ring-1 focus:ring-primary/20 focus:outline-none"
           />
         </div>
 
         <!-- Stack (comma-separated) -->
         <div class="space-y-1">
-          <label class="font-mono text-[10px] tracking-wider uppercase text-muted-foreground/80">
+          <label
+            class="font-mono text-[10px] tracking-wider text-muted-foreground/80 uppercase"
+          >
             Stack (comma-separated)
           </label>
           <input
             type="text"
             id="project-stack"
             name="stack"
-            value={stack.join(', ')}
-            class="w-full rounded-sm border border-border bg-secondary/40 px-3 py-2.5 text-sm transition-all focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20"
+            value={stack.join(", ")}
+            class="w-full rounded-sm border border-border bg-secondary/40 px-3 py-2.5 text-sm transition-all focus:border-primary focus:ring-1 focus:ring-primary/20 focus:outline-none"
           />
         </div>
 
         <!-- Awards (JSON) -->
         <div class="space-y-1">
-          <label class="font-mono text-[10px] tracking-wider uppercase text-muted-foreground/80">
+          <label
+            class="font-mono text-[10px] tracking-wider text-muted-foreground/80 uppercase"
+          >
             Awards (JSON format)
           </label>
           <textarea
             id="project-awards"
             name="awards"
             rows={3}
-            class="w-full rounded-sm border border-border bg-secondary/40 px-3 py-2.5 text-sm transition-all focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20 resize-none font-mono text-[10px]"
-          >{JSON.stringify(awards, null, 2)}</textarea>
+            class="w-full resize-none rounded-sm border border-border bg-secondary/40 px-3 py-2.5 font-mono text-sm text-[10px] transition-all focus:border-primary focus:ring-1 focus:ring-primary/20 focus:outline-none"
+            >{JSON.stringify(awards, null, 2)}</textarea
+          >
         </div>
 
         <!-- Metrics (JSON) -->
         <div class="space-y-1">
-          <label class="font-mono text-[10px] tracking-wider uppercase text-muted-foreground/80">
+          <label
+            class="font-mono text-[10px] tracking-wider text-muted-foreground/80 uppercase"
+          >
             Metrics (JSON format)
           </label>
           <textarea
             id="project-metrics"
             name="metrics"
             rows={3}
-            class="w-full rounded-sm border border-border bg-secondary/40 px-3 py-2.5 text-sm transition-all focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20 resize-none font-mono text-[10px]"
-          >{JSON.stringify(metrics, null, 2)}</textarea>
+            class="w-full resize-none rounded-sm border border-border bg-secondary/40 px-3 py-2.5 font-mono text-sm text-[10px] transition-all focus:border-primary focus:ring-1 focus:ring-primary/20 focus:outline-none"
+            >{JSON.stringify(metrics, null, 2)}</textarea
+          >
         </div>
 
         <!-- Featured & Personal -->
         <div class="grid grid-cols-2 gap-4">
           <div class="space-y-1">
-            <label class="flex items-center gap-2 font-mono text-[10px] tracking-wider uppercase text-muted-foreground/80">
-              <input type="checkbox" id="project-isFeatured" name="isFeatured" value="1" {project.isFeatured === 1 ? 'checked' : ''} class="h-3 w-3" />
+            <label
+              class="flex items-center gap-2 font-mono text-[10px] tracking-wider text-muted-foreground/80 uppercase"
+            >
+              <input
+                type="checkbox"
+                id="project-isFeatured"
+                name="isFeatured"
+                value="1"
+                {project.isFeatured === 1 ? 'checked' : ''}
+                class="h-3 w-3"
+              />
               Featured
             </label>
           </div>
           <div class="space-y-1">
-            <label class="flex items-center gap-2 font-mono text-[10px] tracking-wider uppercase text-muted-foreground/80">
-              <input type="checkbox" id="project-isPersonal" name="isPersonal" value="1" {project.isPersonal === 1 ? 'checked' : ''} class="h-3 w-3" />
+            <label
+              class="flex items-center gap-2 font-mono text-[10px] tracking-wider text-muted-foreground/80 uppercase"
+            >
+              <input
+                type="checkbox"
+                id="project-isPersonal"
+                name="isPersonal"
+                value="1"
+                {project.isPersonal === 1 ? 'checked' : ''}
+                class="h-3 w-3"
+              />
               Personal
             </label>
           </div>
@@ -297,7 +343,7 @@ const tagOptions = allTags.map((t) => t.tag).filter(Boolean)
         <div class="flex gap-2">
           <button
             type="submit"
-            class="flex-1 rounded-sm bg-[hsl(var(--chart-1))] py-2.5 font-mono text-sm font-bold tracking-wider uppercase text-white transition-all hover:bg-[hsl(var(--chart-1))]/90"
+            class="flex-1 rounded-sm bg-[hsl(var(--chart-1))] py-2.5 font-mono text-sm font-bold tracking-wider text-white uppercase transition-all hover:bg-[hsl(var(--chart-1))]/90"
           >
             Update Project
           </button>
@@ -311,7 +357,7 @@ const tagOptions = allTags.map((t) => t.tag).filter(Boolean)
           <button
             type="button"
             id="delete-project"
-            class="rounded-sm border border-red-500 bg-red-500/10 px-4 py-2.5 font-mono text-sm font-bold tracking-wider uppercase text-red-500 transition-all hover:bg-red-500/20"
+            class="rounded-sm border border-red-500 bg-red-500/10 px-4 py-2.5 font-mono text-sm font-bold tracking-wider text-red-500 uppercase transition-all hover:bg-red-500/20"
           >
             Delete
           </button>
@@ -332,79 +378,117 @@ const tagOptions = allTags.map((t) => t.tag).filter(Boolean)
       }
 
       // Form submission
-      const form = document.getElementById('edit-project-form')
-      const deleteBtn = document.getElementById('delete-project')
-      const projectId = (document.getElementById('project-id') as HTMLInputElement).value
+      const form = document.getElementById("edit-project-form")
+      const deleteBtn = document.getElementById("delete-project")
+      const projectId = (
+        document.getElementById("project-id") as HTMLInputElement
+      ).value
 
-      form?.addEventListener('submit', async (e) => {
+      form?.addEventListener("submit", async (e) => {
         e.preventDefault()
 
         const formData = {
           id: projectId,
-          title: (document.getElementById('project-title') as HTMLInputElement).value,
-          tech: (document.getElementById('project-tech') as HTMLInputElement).value,
-          role: (document.getElementById('project-role') as HTMLInputElement).value,
-          date: (document.getElementById('project-date') as HTMLInputElement).value,
-          releasedAt: (document.getElementById('project-releasedAt') as HTMLInputElement).value,
-          tag: (document.getElementById('project-tag') as HTMLInputElement).value,
-          description: (document.getElementById('project-description') as HTMLTextAreaElement).value,
-          cover: (document.getElementById('project-cover') as HTMLInputElement).value,
-          imgs: (document.getElementById('project-imgs') as HTMLInputElement).value,
-          githubUrl: (document.getElementById('project-githubUrl') as HTMLInputElement).value,
-          projectUrl: (document.getElementById('project-projectUrl') as HTMLInputElement).value,
-          features: (document.getElementById('project-features') as HTMLInputElement).value,
-          stack: (document.getElementById('project-stack') as HTMLInputElement).value,
-          awards: (document.getElementById('project-awards') as HTMLTextAreaElement).value,
-          metrics: (document.getElementById('project-metrics') as HTMLTextAreaElement).value,
-          isFeatured: (document.getElementById('project-isFeatured') as HTMLInputElement).checked ? 1 : 0,
-          isPersonal: (document.getElementById('project-isPersonal') as HTMLInputElement).checked ? 1 : 0,
+          title: (document.getElementById("project-title") as HTMLInputElement)
+            .value,
+          tech: (document.getElementById("project-tech") as HTMLInputElement)
+            .value,
+          role: (document.getElementById("project-role") as HTMLInputElement)
+            .value,
+          date: (document.getElementById("project-date") as HTMLInputElement)
+            .value,
+          releasedAt: (
+            document.getElementById("project-releasedAt") as HTMLInputElement
+          ).value,
+          tag: (document.getElementById("project-tag") as HTMLInputElement)
+            .value,
+          description: (
+            document.getElementById(
+              "project-description"
+            ) as HTMLTextAreaElement
+          ).value,
+          cover: (document.getElementById("project-cover") as HTMLInputElement)
+            .value,
+          imgs: (document.getElementById("project-imgs") as HTMLInputElement)
+            .value,
+          githubUrl: (
+            document.getElementById("project-githubUrl") as HTMLInputElement
+          ).value,
+          projectUrl: (
+            document.getElementById("project-projectUrl") as HTMLInputElement
+          ).value,
+          features: (
+            document.getElementById("project-features") as HTMLInputElement
+          ).value,
+          stack: (document.getElementById("project-stack") as HTMLInputElement)
+            .value,
+          awards: (
+            document.getElementById("project-awards") as HTMLTextAreaElement
+          ).value,
+          metrics: (
+            document.getElementById("project-metrics") as HTMLTextAreaElement
+          ).value,
+          isFeatured: (
+            document.getElementById("project-isFeatured") as HTMLInputElement
+          ).checked
+            ? 1
+            : 0,
+          isPersonal: (
+            document.getElementById("project-isPersonal") as HTMLInputElement
+          ).checked
+            ? 1
+            : 0,
         }
 
         try {
-          const response = await fetch('/api/admin/projects', {
-            method: 'PUT',
+          const response = await fetch("/api/admin/projects", {
+            method: "PUT",
             headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem("admin_token")}`,
             },
-            body: JSON.stringify(formData)
+            body: JSON.stringify(formData),
           })
 
           if (response.ok) {
-            window.location.href = '/admin/projects'
+            window.location.href = "/admin/projects"
           } else {
             const error = await response.json()
-            alert(error.error || 'Failed to update project')
+            alert(error.error || "Failed to update project")
           }
         } catch (err) {
-          alert('Error updating project: ' + err)
+          alert("Error updating project: " + err)
         }
       })
 
       // Delete button
-      deleteBtn?.addEventListener('click', async () => {
-        if (!confirm('Are you sure you want to delete this project? This cannot be undone.')) {
+      deleteBtn?.addEventListener("click", async () => {
+        if (
+          !confirm(
+            "Are you sure you want to delete this project? This cannot be undone."
+          )
+        ) {
           return
         }
 
         try {
-          const response = await fetch('/api/admin/projects', {
-            method: 'DELETE',
+          const response = await fetch("/api/admin/projects", {
+            method: "DELETE",
             headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem("admin_token")}`,
             },
-            body: JSON.stringify({ id: projectId })
+            body: JSON.stringify({ id: projectId }),
           })
 
           if (response.ok) {
-            window.location.href = '/admin/projects'
+            window.location.href = "/admin/projects"
           } else {
             const error = await response.json()
-            alert(error.error || 'Failed to delete project')
+            alert(error.error || "Failed to delete project")
           }
         } catch (err) {
-          alert('Error deleting project: ' + err)
+          alert("Error deleting project: " + err)
         }
       })
     })

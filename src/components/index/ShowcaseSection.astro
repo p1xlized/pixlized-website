@@ -1,25 +1,22 @@
 ---
 // ShowcaseSection.astro - Second section with 2 best projects + toolkit
-import { db } from "@/db/db"
+import { getProjects, getD1 } from "@/db/db"
 import ToolkitGrid from "./ToolkitGrid"
 import { memoizedQuery } from "@/utils/memoize"
 
 // Memoized query for 2 random featured projects
-const getFeaturedProjects = () => {
-  const statement = db.prepare(`
-    SELECT * FROM projects
-    WHERE isFeatured = 1
-    ORDER BY RANDOM()
-    LIMIT 2
-  `)
-  const rows = statement.all() as any[]
+const getFeaturedProjects = async () => {
+  const d1 = getD1()
+  const allProjects = await getProjects(d1)
+  const featured = allProjects.filter((p) => p.isFeatured)
+  const randomFeatured = featured.sort(() => Math.random() - 0.5).slice(0, 2)
 
-  return rows.map((row) => ({
-    title: row.title,
-    description: row.description,
-    image: row.cover,
-    tags: JSON.parse(row.stack || "[]"),
-    link: `/projects/${row.id}`,
+  return randomFeatured.map((project) => ({
+    title: project.title,
+    description: project.description,
+    image: project.cover,
+    tags: project.stack || [],
+    link: `/projects/${project.id}`,
   }))
 }
 

@@ -1,5 +1,6 @@
 import type { APIRoute } from "astro"
-import { db } from "@/db/db"
+import { getMusicTracks, getAlbums, queryOne, insert, query } from "@/db/db"
+import type { D1Database } from "@cloudflare/workers-types"
 
 // POST: Add new track
 // PUT: Update existing track
@@ -24,7 +25,7 @@ const expectedHash = simpleHash(ADMIN_USER + ":" + ADMIN_PASS)
 function validateToken(token: string): boolean {
   try {
     const decoded = atob(token)
-    const [username] = decoded.split(':')
+    const [username] = decoded.split(":")
     const inputHash = simpleHash(username + ":" + ADMIN_PASS)
     return inputHash === expectedHash
   } catch {
@@ -33,198 +34,235 @@ function validateToken(token: string): boolean {
 }
 
 // GET: List all tracks
-export const GET: APIRoute = async ({ request }) => {
+export const GET: APIRoute = async ({ request, locals }) => {
   try {
-    const token = request.headers.get('Authorization')?.replace('Bearer ', '') || ''
+    const token =
+      request.headers.get("Authorization")?.replace("Bearer ", "") || ""
     if (!validateToken(token)) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
-        headers: { 'Content-Type': 'application/json' }
+        headers: { "Content-Type": "application/json" },
       })
     }
 
-    const tracks = db.prepare(`
-      SELECT mt.*, a.title as albumTitle
-      FROM music_tracks mt
-      LEFT JOIN albums a ON mt.albumId = a.id
-      ORDER BY mt.albumId, mt.id
-    `).all()
+    const d1 = locals.runtime.env.CF_D1_DB as D1Database
+    const tracks = await getMusicTracks(d1)
+    const albums = await getAlbums(d1)
 
-    return new Response(JSON.stringify({ tracks }), {
+    // Enrich tracks with album titles
+    const enrichedTracks = tracks.map((track) => {
+      const album = albums.find((a) => a.id === track.albumId)
+      return {
+        ...track,
+        albumTitle: album?.title || null,
+      }
+    })
+
+    return new Response(JSON.stringify({ tracks: enrichedTracks }), {
       status: 200,
-      headers: { 'Content-Type': 'application/json' }
+      headers: { "Content-Type": "application/json" },
     })
   } catch (error) {
-    return new Response(JSON.stringify({ error: 'Failed to fetch tracks' }), {
+    return new Response(JSON.stringify({ error: "Failed to fetch tracks" }), {
       status: 500,
-      headers: { 'Content-Type': 'application/json' }
+      headers: { "Content-Type": "application/json" },
     })
   }
 }
 
 // POST: Add new track
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async ({ request, locals }) => {
   try {
-    const token = request.headers.get('Authorization')?.replace('Bearer ', '') || ''
+    const token =
+      request.headers.get("Authorization")?.replace("Bearer ", "") || ""
     if (!validateToken(token)) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
-        headers: { 'Content-Type': 'application/json' }
+        headers: { "Content-Type": "application/json" },
       })
     }
 
+    const d1 = locals.runtime.env.CF_D1_DB as D1Database
     const body = await request.json()
     const { title, genre, duration, bpm, description, file, albumId } = body
 
     if (!title || !genre || !duration || !file || !albumId) {
-      return new Response(JSON.stringify({ error: 'Missing required fields: title, genre, duration, file, albumId' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' }
-      })
+      return new Response(
+        JSON.stringify({
+          error:
+            "Missing required fields: title, genre, duration, file, albumId",
+        }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json" },
+        }
+      )
     }
 
     // Check if album exists
-    const album = db.prepare('SELECT id FROM albums WHERE id = ?').get(albumId) as { id: number } | undefined
+    const album = (await queryOne(d1, "SELECT id FROM albums WHERE id = ?", [
+      albumId,
+    ])) as { id: number } | undefined
     if (!album) {
-      return new Response(JSON.stringify({ error: 'Album not found' }), {
+      return new Response(JSON.stringify({ error: "Album not found" }), {
         status: 400,
-        headers: { 'Content-Type': 'application/json' }
+        headers: { "Content-Type": "application/json" },
       })
     }
 
-    const insertStatement = db.prepare(`
+    const result = await insert(
+      d1,
+      `
       INSERT INTO music_tracks (title, genre, duration, bpm, description, file, albumId, createdAt)
       VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-    `)
-
-    const result = insertStatement.run(
-      title,
-      genre,
-      duration,
-      bpm || null,
-      description || null,
-      file,
-      albumId
+    `,
+      [title, genre, duration, bpm || null, description || null, file, albumId]
     )
 
-    const newTrack = db.prepare('SELECT * FROM music_tracks WHERE id = ?').get(result.lastInsertRowid)
+    const newTrack = await queryOne(
+      d1,
+      "SELECT * FROM music_tracks WHERE id = ?",
+      [result.lastInsertRowid]
+    )
 
-    return new Response(JSON.stringify({ track: newTrack, id: result.lastInsertRowid }), {
-      status: 201,
-      headers: { 'Content-Type': 'application/json' }
-    })
+    return new Response(
+      JSON.stringify({ track: newTrack, id: result.lastInsertRowid }),
+      {
+        status: 201,
+        headers: { "Content-Type": "application/json" },
+      }
+    )
   } catch (error) {
-    return new Response(JSON.stringify({ error: 'Failed to add track' }), {
+    return new Response(JSON.stringify({ error: "Failed to add track" }), {
       status: 500,
-      headers: { 'Content-Type': 'application/json' }
+      headers: { "Content-Type": "application/json" },
     })
   }
 }
 
 // DELETE: Delete track
-export const DELETE: APIRoute = async ({ request }) => {
+export const DELETE: APIRoute = async ({ request, locals }) => {
   try {
-    const token = request.headers.get('Authorization')?.replace('Bearer ', '') || ''
+    const token =
+      request.headers.get("Authorization")?.replace("Bearer ", "") || ""
     if (!validateToken(token)) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
-        headers: { 'Content-Type': 'application/json' }
+        headers: { "Content-Type": "application/json" },
       })
     }
 
+    const d1 = locals.runtime.env.CF_D1_DB as D1Database
     const { url } = new URL(request.url)
     const searchParams = new URLSearchParams(url.search)
-    const id = parseInt(searchParams.get('id') || '0')
+    const id = parseInt(searchParams.get("id") || "0")
 
     if (!id) {
-      return new Response(JSON.stringify({ error: 'Track ID required' }), {
+      return new Response(JSON.stringify({ error: "Track ID required" }), {
         status: 400,
-        headers: { 'Content-Type': 'application/json' }
+        headers: { "Content-Type": "application/json" },
       })
     }
 
     // Check if track exists
-    const track = db.prepare('SELECT id FROM music_tracks WHERE id = ?').get(id) as { id: number } | undefined
+    const track = (await queryOne(
+      d1,
+      "SELECT id FROM music_tracks WHERE id = ?",
+      [id]
+    )) as { id: number } | undefined
     if (!track) {
-      return new Response(JSON.stringify({ error: 'Track not found' }), {
+      return new Response(JSON.stringify({ error: "Track not found" }), {
         status: 404,
-        headers: { 'Content-Type': 'application/json' }
+        headers: { "Content-Type": "application/json" },
       })
     }
 
-    db.prepare('DELETE FROM music_tracks WHERE id = ?').run(id)
+    await execute(d1, "DELETE FROM music_tracks WHERE id = ?", [id])
 
-    return new Response(JSON.stringify({ message: 'Track deleted successfully' }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' }
-    })
+    return new Response(
+      JSON.stringify({ message: "Track deleted successfully" }),
+      {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }
+    )
   } catch (error) {
-    return new Response(JSON.stringify({ error: 'Failed to delete track' }), {
+    return new Response(JSON.stringify({ error: "Failed to delete track" }), {
       status: 500,
-      headers: { 'Content-Type': 'application/json' }
+      headers: { "Content-Type": "application/json" },
     })
   }
 }
 
 // PUT: Update track
-export const PUT: APIRoute = async ({ request }) => {
+export const PUT: APIRoute = async ({ request, locals }) => {
   try {
-    const token = request.headers.get('Authorization')?.replace('Bearer ', '') || ''
+    const token =
+      request.headers.get("Authorization")?.replace("Bearer ", "") || ""
     if (!validateToken(token)) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
-        headers: { 'Content-Type': 'application/json' }
+        headers: { "Content-Type": "application/json" },
       })
     }
 
+    const d1 = locals.runtime.env.CF_D1_DB as D1Database
     const body = await request.json()
     const { id, title, genre, duration, bpm, description, file, albumId } = body
 
     if (!id) {
-      return new Response(JSON.stringify({ error: 'Track ID required' }), {
+      return new Response(JSON.stringify({ error: "Track ID required" }), {
         status: 400,
-        headers: { 'Content-Type': 'application/json' }
+        headers: { "Content-Type": "application/json" },
       })
     }
 
     // Check if album exists (if provided)
     if (albumId) {
-      const album = db.prepare('SELECT id FROM albums WHERE id = ?').get(albumId) as { id: number } | undefined
+      const album = (await queryOne(d1, "SELECT id FROM albums WHERE id = ?", [
+        albumId,
+      ])) as { id: number } | undefined
       if (!album) {
-        return new Response(JSON.stringify({ error: 'Album not found' }), {
+        return new Response(JSON.stringify({ error: "Album not found" }), {
           status: 400,
-          headers: { 'Content-Type': 'application/json' }
+          headers: { "Content-Type": "application/json" },
         })
       }
     }
 
-    const updateStatement = db.prepare(`
+    await execute(
+      d1,
+      `
       UPDATE music_tracks
       SET title = ?, genre = ?, duration = ?, bpm = ?, description = ?, file = ?, albumId = ?
       WHERE id = ?
-    `)
-
-    updateStatement.run(
-      title || undefined,
-      genre || undefined,
-      duration || undefined,
-      bpm || undefined,
-      description || undefined,
-      file || undefined,
-      albumId || undefined,
-      id
+    `,
+      [
+        title || undefined,
+        genre || undefined,
+        duration || undefined,
+        bpm || undefined,
+        description || undefined,
+        file || undefined,
+        albumId || undefined,
+        id,
+      ]
     )
 
-    const updatedTrack = db.prepare('SELECT * FROM music_tracks WHERE id = ?').get(id)
+    const updatedTrack = await queryOne(
+      d1,
+      "SELECT * FROM music_tracks WHERE id = ?",
+      [id]
+    )
 
     return new Response(JSON.stringify({ track: updatedTrack }), {
       status: 200,
-      headers: { 'Content-Type': 'application/json' }
+      headers: { "Content-Type": "application/json" },
     })
   } catch (error) {
-    return new Response(JSON.stringify({ error: 'Failed to update track' }), {
+    return new Response(JSON.stringify({ error: "Failed to update track" }), {
       status: 500,
-      headers: { 'Content-Type': 'application/json' }
+      headers: { "Content-Type": "application/json" },
     })
   }
 }

@@ -1,24 +1,37 @@
 import tailwindcss from "@tailwindcss/vite"
 import { defineConfig } from "astro/config"
 import react from "@astrojs/react"
-import node from "@astrojs/node"
+import cloudflare from "@astrojs/cloudflare"
+
+const polyfillMessageChannel = () => ({
+  name: "polyfill-message-channel",
+  banner: () => `
+    if (typeof globalThis.MessageChannel === 'undefined') {
+      globalThis.MessageChannel = class MessageChannel {
+        constructor() {
+          this.port1 = { onmessage: null, postMessage: () => {} };
+          this.port2 = { onmessage: null, postMessage: () => {} };
+        }
+      };
+    }
+  `,
+})
 
 // https://astro.build/config
 export default defineConfig({
   vite: {
-    plugins: [tailwindcss()],
+    plugins: [tailwindcss(), polyfillMessageChannel()],
   },
   output: "server",
-  adapter: node({
-    mode: "standalone",
+  adapter: cloudflare({
+    imageService: "cloudflare", // Uses Cloudflare's image optimization
   }),
   integrations: [react()],
   markdown: {
     shikiConfig: {
-      // Choose dual themes for dark and light mode
       themes: {
-        light: "vitesse-light", // or 'min-light'
-        dark: "vitesse-dark", // or 'nord'
+        light: "vitesse-light",
+        dark: "vitesse-dark",
       },
     },
   },

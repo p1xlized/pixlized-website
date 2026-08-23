@@ -1,20 +1,21 @@
 ---
 import MainLayout from "@/layouts/main.astro"
-import { db } from "@/db/db"
+import { getAlbums, getMusicTracks, getD1 } from "@/db/db"
 
-// Get album by ID
+// Get D1 instance from Cloudflare runtime locals
+const d1 = getD1()
+
 const { id } = Astro.params
-const album = db.prepare("SELECT * FROM albums WHERE id = ?").get(id) as any
+const albums = await getAlbums(d1)
+const album = albums.find((a) => a.id === Number(id))
 
 if (!album) {
-  // Redirect to albums list if not found
-  return Response.redirect("/admin/albums", 302)
+  return Astro.redirect("/admin/albums")
 }
 
-// Get tracks in this album
-const tracks = db
-  .prepare("SELECT * FROM music_tracks WHERE albumId = ? ORDER BY id")
-  .all(id) as any[]
+// Get tracks for this album
+const allTracks = await getMusicTracks(d1)
+const tracks = allTracks.filter((t) => t.albumId === album.id)
 ---
 
 <MainLayout>

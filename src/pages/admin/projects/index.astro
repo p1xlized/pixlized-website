@@ -1,17 +1,18 @@
 ---
 import MainLayout from "@/layouts/main.astro"
-import { db } from "@/db/db"
+import { getProjects, getD1 } from "@/db/db"
+
+// Get D1 instance from Cloudflare runtime locals
+const d1 = getD1()
 
 // Get all projects
-const projects = db.prepare(`
-  SELECT *
-  FROM projects
-  ORDER BY releasedAt DESC
-`).all() as any[]
+const projects = await getProjects(d1)
 ---
 
 <MainLayout>
-  <section class="flex h-full w-full flex-col items-center justify-start py-12 px-4">
+  <section
+    class="flex h-full w-full flex-col items-center justify-start px-4 py-12"
+  >
     <div class="w-full max-w-4xl space-y-6">
       <!-- Header -->
       <div class="flex items-center justify-between">
@@ -19,9 +20,7 @@ const projects = db.prepare(`
           <h1 class="text-2xl font-bold tracking-tight">
             <span class="font-mono text-[hsl(var(--chart-1))]">📁</span> Projects
           </h1>
-          <p class="mt-1 text-sm text-muted-foreground">
-            Manage your projects
-          </p>
+          <p class="mt-1 text-sm text-muted-foreground">Manage your projects</p>
         </div>
         <div class="flex gap-2">
           <a
@@ -32,7 +31,7 @@ const projects = db.prepare(`
           </a>
           <a
             href="/admin/projects/new"
-            class="rounded-sm border border-[hsl(var(--chart-1))] bg-[hsl(var(--chart-1))] px-3 py-1.5 font-mono text-xs font-bold tracking-wider uppercase transition-colors hover:bg-[hsl(var(--chart-1))]/90 text-white"
+            class="rounded-sm border border-[hsl(var(--chart-1))] bg-[hsl(var(--chart-1))] px-3 py-1.5 font-mono text-xs font-bold tracking-wider text-white uppercase transition-colors hover:bg-[hsl(var(--chart-1))]/90"
           >
             + New Project
           </a>
@@ -40,41 +39,67 @@ const projects = db.prepare(`
       </div>
 
       <!-- Stats -->
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div class="grid grid-cols-2 gap-4 md:grid-cols-4">
         <div class="rounded-sm border border-border bg-card p-4 text-center">
           <div class="text-2xl font-bold">{projects.length}</div>
-          <div class="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+          <div
+            class="font-mono text-[10px] tracking-wider text-muted-foreground uppercase"
+          >
             Total Projects
           </div>
         </div>
         <div class="rounded-sm border border-border bg-card p-4 text-center">
           <div class="text-2xl font-bold">
-            {db.prepare("SELECT COUNT(*) as count FROM projects WHERE isFeatured = 1").get().count}
+            {
+              db
+                .prepare(
+                  "SELECT COUNT(*) as count FROM projects WHERE isFeatured = 1"
+                )
+                .get().count
+            }
           </div>
-          <div class="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+          <div
+            class="font-mono text-[10px] tracking-wider text-muted-foreground uppercase"
+          >
             Featured
           </div>
         </div>
         <div class="rounded-sm border border-border bg-card p-4 text-center">
           <div class="text-2xl font-bold">
-            {db.prepare("SELECT COUNT(*) as count FROM projects WHERE isPersonal = 1").get().count}
+            {
+              db
+                .prepare(
+                  "SELECT COUNT(*) as count FROM projects WHERE isPersonal = 1"
+                )
+                .get().count
+            }
           </div>
-          <div class="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+          <div
+            class="font-mono text-[10px] tracking-wider text-muted-foreground uppercase"
+          >
             Personal
           </div>
         </div>
         <div class="rounded-sm border border-border bg-card p-4 text-center">
           <div class="text-2xl font-bold">
-            {db.prepare("SELECT COUNT(DISTINCT tag) as count FROM projects WHERE tag IS NOT NULL").get().count || 0}
+            {
+              db
+                .prepare(
+                  "SELECT COUNT(DISTINCT tag) as count FROM projects WHERE tag IS NOT NULL"
+                )
+                .get().count || 0
+            }
           </div>
-          <div class="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+          <div
+            class="font-mono text-[10px] tracking-wider text-muted-foreground uppercase"
+          >
             Tags
           </div>
         </div>
       </div>
 
       <!-- Projects Grid -->
-      <div class="rounded-sm border border-border bg-card p-6 space-y-4">
+      <div class="space-y-4 rounded-sm border border-border bg-card p-6">
         <div class="flex items-center justify-between">
           <h2 class="font-mono text-sm font-bold tracking-tight uppercase">
             All Projects
@@ -84,51 +109,57 @@ const projects = db.prepare(`
           </span>
         </div>
 
-        {projects.length === 0 ? (
-          <div class="flex h-32 items-center justify-center text-muted-foreground">
-            <p>No projects found. Create your first project!</p>
-          </div>
-        ) : (
-          <div class="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
-            {projects.map((project) => (
-              <div
-                key={project.id}
-                class="rounded-sm border border-border/40 bg-secondary/30 overflow-hidden transition-all hover:border-[hsl(var(--chart-1))]/40"
-              >
-                {project.cover ? (
-                  <img
-                    src={project.cover}
-                    alt={project.title}
-                    class="h-32 w-full object-cover"
-                  />
-                ) : (
-                  <div class="h-32 w-full bg-secondary/40 flex items-center justify-center">
-                    <span class="font-mono text-xs text-muted-foreground">No Cover</span>
-                  </div>
-                )}
-                <div class="p-3">
-                  <div class="flex items-center justify-between">
-                    <h3 class="font-bold text-sm truncate">{project.title}</h3>
-                    <span class="font-mono text-[10px] text-muted-foreground">
-                      {project.tag}
-                    </span>
-                  </div>
-                  <p class="font-mono text-[10px] text-muted-foreground mt-1 truncate">
-                    {project.tech}
-                  </p>
-                  <div class="flex gap-2 mt-2">
-                    <a
-                      href={`/admin/projects/${project.id}/edit`}
-                      class="flex-1 rounded-sm border border-border bg-secondary/50 px-2 py-1 font-mono text-[10px] tracking-wider uppercase transition-colors hover:bg-secondary/80 text-center"
-                    >
-                      Edit
-                    </a>
+        {
+          projects.length === 0 ? (
+            <div class="flex h-32 items-center justify-center text-muted-foreground">
+              <p>No projects found. Create your first project!</p>
+            </div>
+          ) : (
+            <div class="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
+              {projects.map((project) => (
+                <div
+                  key={project.id}
+                  class="overflow-hidden rounded-sm border border-border/40 bg-secondary/30 transition-all hover:border-[hsl(var(--chart-1))]/40"
+                >
+                  {project.cover ? (
+                    <img
+                      src={project.cover}
+                      alt={project.title}
+                      class="h-32 w-full object-cover"
+                    />
+                  ) : (
+                    <div class="flex h-32 w-full items-center justify-center bg-secondary/40">
+                      <span class="font-mono text-xs text-muted-foreground">
+                        No Cover
+                      </span>
+                    </div>
+                  )}
+                  <div class="p-3">
+                    <div class="flex items-center justify-between">
+                      <h3 class="truncate text-sm font-bold">
+                        {project.title}
+                      </h3>
+                      <span class="font-mono text-[10px] text-muted-foreground">
+                        {project.tag}
+                      </span>
+                    </div>
+                    <p class="mt-1 truncate font-mono text-[10px] text-muted-foreground">
+                      {project.tech}
+                    </p>
+                    <div class="mt-2 flex gap-2">
+                      <a
+                        href={`/admin/projects/${project.id}/edit`}
+                        class="flex-1 rounded-sm border border-border bg-secondary/50 px-2 py-1 text-center font-mono text-[10px] tracking-wider uppercase transition-colors hover:bg-secondary/80"
+                      >
+                        Edit
+                      </a>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        )}
+              ))}
+            </div>
+          )
+        }
       </div>
     </div>
   </section>

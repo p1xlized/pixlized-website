@@ -1,29 +1,18 @@
 ---
 import MainLayout from "../../layouts/main.astro"
-import { db } from "../../db/db"
+import { getProjects, getD1 } from "../../db/db"
 import ProjectCard from "../../components/Projects/ProjectCard.astro"
 import "@/styles/global.css"
+
+// Get D1 instance from Cloudflare runtime locals
+const d1 = getD1()
 
 const url = Astro.url
 const searchParams = new URLSearchParams(url.search)
 const searchQuery = searchParams.get("q") || ""
 const tagFilter = searchParams.get("tag") || "All"
 
-const rawProjects = db
-  .prepare("SELECT * FROM projects ORDER BY releasedAt DESC")
-  .all() as any[]
-
-const allProjects = rawProjects.map((row) => ({
-  id: row.id,
-  title: row.title,
-  date: row.date,
-  tag: row.tag as "MOBILE" | "WEB" | "GAME",
-  cover: row.cover,
-  isVideo: row.isVideo === 1,
-  isPersonal: row.isPersonal === 1,
-  stack: row.stack ? JSON.parse(row.stack) : [],
-  description: row.description,
-}))
+const allProjects = await getProjects(d1)
 
 const allTags = [
   "All",
