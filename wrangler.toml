@@ -3,7 +3,7 @@ compatibility_date = "2024-09-23"
 compatibility_flags = ["nodejs_compat_v2"]
 
 # Main entry point for the server
-main = "./dist/server/entry.mjs"
+main = "./dist/_worker.js"
 
 # Static assets
 [assets]
