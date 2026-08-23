@@ -1,9 +1,12 @@
+
 name = "pixlized-website"
 compatibility_date = "2024-01-01"
-main = "dist/server/index.js" # Entry point for your SSR application
+
+# Astro Cloudflare adapter entry point
+main = "dist/server/entry.mjs"
 
 [assets]
-directory = "./public" # Static asset directory
+directory = "./dist/client"
 
 [env.production]
 name = "pixlized-website"
