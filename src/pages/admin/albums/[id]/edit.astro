@@ -342,7 +342,7 @@ const tracks = allTracks.filter((t) => t.albumId === album.id)
         sessionStorage.getItem("admin_logged_in") ||
         localStorage.getItem("admin_token")
       if (!isLoggedIn) {
-        const adminSeed = import.meta.env.ADMIN_SEED || "pixlized-secret-2026"
+        const adminSeed = import.meta.env.ADMIN_SEED
         window.location.href = `/secret/${adminSeed}/admin`
       }
 

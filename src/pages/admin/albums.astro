@@ -218,7 +218,12 @@ const enrichedAlbums = albums.map((album) => {
       sessionStorage.getItem("admin_logged_in") ||
       localStorage.getItem("admin_token")
     if (!isLoggedIn) {
-      const adminSeed = import.meta.env.ADMIN_SEED || "pixlized-secret-2026"
+      const adminSeed = import.meta.env.ADMIN_SEED
+      if (!adminSeed) {
+        console.error("ADMIN_SEED not configured")
+        window.location.href = "/"
+        return
+      }
       window.location.href = `/secret/${adminSeed}/admin`
     }
 

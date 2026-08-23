@@ -1,23 +1,55 @@
 ---
 // ShowcaseSection.astro - Second section with 2 best projects + toolkit
-import { getProjects, getD1 } from "@/db/db"
+import { getProjects, getD1, INITIAL_PROJECTS } from "@/db/db"
 import ToolkitGrid from "./ToolkitGrid"
 import { memoizedQuery } from "@/utils/memoize"
 
 // Memoized query for 2 random featured projects
 const getFeaturedProjects = async () => {
-  const d1 = getD1()
-  const allProjects = await getProjects(d1)
-  const featured = allProjects.filter((p) => p.isFeatured)
-  const randomFeatured = featured.sort(() => Math.random() - 0.5).slice(0, 2)
+  try {
+    const d1 = getD1()
+    const allProjects = await getProjects(d1)
+    const featured = allProjects.filter((p) => p.isFeatured)
 
-  return randomFeatured.map((project) => ({
-    title: project.title,
-    description: project.description,
-    image: project.cover,
-    tags: project.stack || [],
-    link: `/projects/${project.id}`,
-  }))
+    if (featured.length === 0) {
+      // Fallback to initial projects if no featured projects in DB
+      const initialFeatured = INITIAL_PROJECTS.filter((p) => p.isFeatured)
+      const randomFeatured = initialFeatured
+        .sort(() => Math.random() - 0.5)
+        .slice(0, 2)
+      return randomFeatured.map((project) => ({
+        title: project.title,
+        description: project.description,
+        image: project.cover,
+        tags: project.stack || [],
+        link: `/projects/${project.id}`,
+      }))
+    }
+
+    const randomFeatured = featured.sort(() => Math.random() - 0.5).slice(0, 2)
+
+    return randomFeatured.map((project) => ({
+      title: project.title,
+      description: project.description,
+      image: project.cover,
+      tags: project.stack || [],
+      link: `/projects/${project.id}`,
+    }))
+  } catch (error) {
+    console.warn("Failed to fetch featured projects:", error)
+    // Fallback to initial projects
+    const initialFeatured = INITIAL_PROJECTS.filter((p) => p.isFeatured)
+    const randomFeatured = initialFeatured
+      .sort(() => Math.random() - 0.5)
+      .slice(0, 2)
+    return randomFeatured.map((project) => ({
+      title: project.title,
+      description: project.description,
+      image: project.cover,
+      tags: project.stack || [],
+      link: `/projects/${project.id}`,
+    }))
+  }
 }
 
 // Memoize the query - will only run once per deployment

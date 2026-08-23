@@ -15,6 +15,14 @@ const simpleHash = (str: string) => {
 
 const ADMIN_USER = import.meta.env.ADMIN_USER
 const ADMIN_PASS = import.meta.env.ADMIN_PASS
+
+// Security: Both ADMIN_USER and ADMIN_PASS must be set
+if (!ADMIN_USER || !ADMIN_PASS) {
+  throw new Error(
+    "ADMIN_USER and ADMIN_PASS environment variables are required for security"
+  )
+}
+
 const expectedHash = simpleHash(ADMIN_USER + ":" + ADMIN_PASS)
 
 // Helper to verify token

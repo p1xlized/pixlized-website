@@ -1,20 +1,30 @@
 ---
-import { getAlbums, getMusicTracks, getD1 } from "@/db/db"
+import {
+  getAlbums,
+  getMusicTracks,
+  getD1,
+  INITIAL_ALBUMS,
+  INITIAL_MUSIC_TRACKS,
+} from "@/db/db"
 import MusicPlayerComponent from "./MusicPlayer"
 
 // Get D1 instance from Cloudflare runtime locals
 const d1 = getD1()
 
-// Fetch data from database
+// Fetch data from database, fallback to initial data
 const rawAlbums = await getAlbums(d1)
 const rawTracks = await getMusicTracks(d1)
+
+// Use initial data if D1 is not available
+const albums = rawAlbums.length > 0 ? rawAlbums : INITIAL_ALBUMS
+const tracks = rawTracks.length > 0 ? rawTracks : INITIAL_MUSIC_TRACKS
 
 // Organize data
 const albumMap = new Map<number, any>()
 const allTracks: any[] = []
 
-rawAlbums.forEach((a) => albumMap.set(a.id, { ...a, tracks: [] }))
-rawTracks.forEach((t) => {
+albums.forEach((a) => albumMap.set(a.id, { ...a, tracks: [] }))
+tracks.forEach((t) => {
   const album = albumMap.get(t.albumId)
   if (album) {
     album.tracks.push({
@@ -37,11 +47,11 @@ rawTracks.forEach((t) => {
   })
 })
 
-const albums = Array.from(albumMap.values())
+const finalAlbums = Array.from(albumMap.values())
 ---
 
 <!-- Client-side hydration -->
-<MusicPlayerComponent client:load albums={albums} tracks={allTracks} />
+<MusicPlayerComponent client:load albums={finalAlbums} tracks={allTracks} />
 
 <!-- Styles -->
 <style is:global>

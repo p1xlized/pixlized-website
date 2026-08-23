@@ -126,40 +126,37 @@ const tracks = await getMusicTracks(d1)
       </h2>
       <div class="space-y-2">
         {
-          db
-            .prepare(`SELECT * FROM projects ORDER BY releasedAt DESC LIMIT 5`)
-            .all()
-            .map((project: any) => (
-              <div class="flex items-center justify-between rounded-sm p-2 transition-colors hover:bg-secondary/50">
-                <div class="flex items-center gap-3">
-                  <img
-                    src={project.cover}
-                    alt={project.title}
-                    class="h-8 w-8 rounded-sm object-cover"
-                  />
-                  <div>
-                    <div class="text-sm font-semibold">{project.title}</div>
-                    <div class="font-mono text-[10px] text-muted-foreground">
-                      {project.date}
-                    </div>
+          projects.slice(0, 5).map((project) => (
+            <div class="flex items-center justify-between rounded-sm p-2 transition-colors hover:bg-secondary/50">
+              <div class="flex items-center gap-3">
+                <img
+                  src={project.cover}
+                  alt={project.title}
+                  class="h-8 w-8 rounded-sm object-cover"
+                />
+                <div>
+                  <div class="text-sm font-semibold">{project.title}</div>
+                  <div class="font-mono text-[10px] text-muted-foreground">
+                    {project.date}
                   </div>
                 </div>
-                <div class="flex gap-2">
-                  <a
-                    href={`/admin/projects/${project.id}/edit`}
-                    class="font-mono text-[10px] tracking-wider text-muted-foreground uppercase hover:text-primary"
-                  >
-                    Edit
-                  </a>
-                  <a
-                    href={`/projects/${project.id}`}
-                    class="font-mono text-[10px] tracking-wider text-muted-foreground uppercase hover:text-primary"
-                  >
-                    View
-                  </a>
-                </div>
               </div>
-            ))
+              <div class="flex gap-2">
+                <a
+                  href={`/admin/projects/${project.id}/edit`}
+                  class="font-mono text-[10px] tracking-wider text-muted-foreground uppercase hover:text-primary"
+                >
+                  Edit
+                </a>
+                <a
+                  href={`/projects/${project.id}`}
+                  class="font-mono text-[10px] tracking-wider text-muted-foreground uppercase hover:text-primary"
+                >
+                  View
+                </a>
+              </div>
+            </div>
+          ))
         }
       </div>
     </div>
@@ -175,7 +172,7 @@ const tracks = await getMusicTracks(d1)
 
     if (!isLoggedIn) {
       // Redirect to admin login page
-      const adminSeed = import.meta.env.ADMIN_SEED || "pixlized-secret-2026"
+      const adminSeed = import.meta.env.ADMIN_SEED
       window.location.href = `/secret/${adminSeed}/admin`
     }
   })

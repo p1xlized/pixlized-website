@@ -10,6 +10,13 @@ import type { D1Database } from "@cloudflare/workers-types"
 const ADMIN_USER = import.meta.env.ADMIN_USER
 const ADMIN_PASS = import.meta.env.ADMIN_PASS
 
+// Security: Both ADMIN_USER and ADMIN_PASS must be set
+if (!ADMIN_USER || !ADMIN_PASS) {
+  throw new Error(
+    "ADMIN_USER and ADMIN_PASS environment variables are required for security"
+  )
+}
+
 const simpleHash = (str: string) => {
   let hash = 0
   for (let i = 0; i < str.length; i++) {

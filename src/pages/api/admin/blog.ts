@@ -17,6 +17,14 @@ const simpleHash = (str: string) => {
 
 const ADMIN_USER = import.meta.env.ADMIN_USER
 const ADMIN_PASS = import.meta.env.ADMIN_PASS
+
+// Security: Both ADMIN_USER and ADMIN_PASS must be set
+if (!ADMIN_USER || !ADMIN_PASS) {
+  throw new Error(
+    "ADMIN_USER and ADMIN_PASS environment variables are required for security"
+  )
+}
+
 const expectedHash = simpleHash(ADMIN_USER + ":" + ADMIN_PASS)
 
 // Helper to verify token
@@ -64,7 +72,7 @@ const getBlogPosts = async () => {
                 } catch {
                   metadata[key.trim()] = value
                 }
-              } else if (value.startsWith("\"") && value.endsWith("\"")) {
+              } else if (value.startsWith('"') && value.endsWith('"')) {
                 metadata[key.trim()] = value.slice(1, -1)
               } else if (value === "true") {
                 metadata[key.trim()] = true
@@ -85,14 +93,15 @@ const getBlogPosts = async () => {
             id: file.replace(".md", ""),
             file: file,
             ...metadata,
-            body: bodyContent
+            body: bodyContent,
           })
         }
       }
     }
 
-    return posts.sort((a: any, b: any) =>
-      new Date(b.pubDate || 0).getTime() - new Date(a.pubDate || 0).getTime()
+    return posts.sort(
+      (a: any, b: any) =>
+        new Date(b.pubDate || 0).getTime() - new Date(a.pubDate || 0).getTime()
     )
   } catch (error) {
     console.error("Error reading blog posts:", error)
@@ -112,7 +121,7 @@ const saveBlogPost = async (id: string, data: any) => {
     `description: "${data.description.replace(/\"/g, '\\\"')}"`,
     `pubDate: ${data.pubDate}`,
     `tags: ${JSON.stringify(data.tags || [])}`,
-    "---"
+    "---",
   ]
 
   const content = [frontmatterLines.join("\n"), "", data.body].join("\n")
@@ -153,10 +162,13 @@ export const GET: APIRoute = async ({ request }) => {
       headers: { "Content-Type": "application/json" },
     })
   } catch (error) {
-    return new Response(JSON.stringify({ error: "Failed to fetch blog posts" }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    })
+    return new Response(
+      JSON.stringify({ error: "Failed to fetch blog posts" }),
+      {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      }
+    )
   }
 }
 
@@ -182,10 +194,13 @@ export const POST: APIRoute = async ({ request }) => {
     })
   } catch (error) {
     console.error("Error creating blog post:", error)
-    return new Response(JSON.stringify({ error: "Failed to create blog post" }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    })
+    return new Response(
+      JSON.stringify({ error: "Failed to create blog post" }),
+      {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      }
+    )
   }
 }
 
@@ -218,10 +233,13 @@ export const PUT: APIRoute = async ({ request }) => {
     })
   } catch (error) {
     console.error("Error updating blog post:", error)
-    return new Response(JSON.stringify({ error: "Failed to update blog post" }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    })
+    return new Response(
+      JSON.stringify({ error: "Failed to update blog post" }),
+      {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      }
+    )
   }
 }
 
@@ -260,9 +278,12 @@ export const DELETE: APIRoute = async ({ request }) => {
       })
     }
   } catch (error) {
-    return new Response(JSON.stringify({ error: "Failed to delete blog post" }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    })
+    return new Response(
+      JSON.stringify({ error: "Failed to delete blog post" }),
+      {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      }
+    )
   }
 }

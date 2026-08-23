@@ -32,7 +32,7 @@ const finalOgImage = ogImage || `${baseUrl}/avatar.webp`
 const finalCanonical = canonical || currentUrl
 
 // Get theme from cookie to prevent flash on page load
-const themeCookie = Astro.cookies?.get("theme")?.value
+const themeCookie = Astro.cookies?.get?.("theme")?.value
 const isDarkTheme = themeCookie === "dark"
 const htmlClasses = [
   "h-full",
