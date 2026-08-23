@@ -50,13 +50,7 @@ const projects = await getProjects(d1)
         </div>
         <div class="rounded-sm border border-border bg-card p-4 text-center">
           <div class="text-2xl font-bold">
-            {
-              db
-                .prepare(
-                  "SELECT COUNT(*) as count FROM projects WHERE isFeatured = 1"
-                )
-                .get().count
-            }
+            {projects.filter((p) => p.isFeatured).length}
           </div>
           <div
             class="font-mono text-[10px] tracking-wider text-muted-foreground uppercase"
@@ -66,13 +60,7 @@ const projects = await getProjects(d1)
         </div>
         <div class="rounded-sm border border-border bg-card p-4 text-center">
           <div class="text-2xl font-bold">
-            {
-              db
-                .prepare(
-                  "SELECT COUNT(*) as count FROM projects WHERE isPersonal = 1"
-                )
-                .get().count
-            }
+            {projects.filter((p) => p.isPersonal).length}
           </div>
           <div
             class="font-mono text-[10px] tracking-wider text-muted-foreground uppercase"
@@ -82,13 +70,7 @@ const projects = await getProjects(d1)
         </div>
         <div class="rounded-sm border border-border bg-card p-4 text-center">
           <div class="text-2xl font-bold">
-            {
-              db
-                .prepare(
-                  "SELECT COUNT(DISTINCT tag) as count FROM projects WHERE tag IS NOT NULL"
-                )
-                .get().count || 0
-            }
+            {new Set(projects.map((p) => p.tag).filter(Boolean)).size}
           </div>
           <div
             class="font-mono text-[10px] tracking-wider text-muted-foreground uppercase"
