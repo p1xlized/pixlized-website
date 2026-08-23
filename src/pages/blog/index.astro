@@ -1,0 +1,93 @@
+---
+import MainLayout from "@/layouts/main.astro"
+import { getCollection } from "astro:content"
+import "@/styles/global.css"
+
+const posts = (await getCollection("blog")).sort(
+  (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
+)
+
+// SEO for blog page
+const blogUrl = "https://pixlized.net/blog"
+---
+
+<MainLayout
+  title="Blog | @pixlized"
+  description="Read articles and tutorials by @pixlized on web development, AI, and creative coding."
+  ogTitle="Blog | @pixlized"
+  ogDescription="Read articles and tutorials by @pixlized on web development, AI, and creative coding."
+  ogUrl={blogUrl}
+  canonical={blogUrl}
+>
+  <section
+    data-label="Blog"
+    class="flex h-full w-full shrink-0 flex-col justify-between md:snap-start"
+  >
+    <div class="flex flex-col gap-6 p-4 sm:p-6 lg:p-8">
+      <div
+        class="flex items-center justify-between border-b border-border pb-3"
+      >
+        <div class="flex items-center gap-3">
+          <span class="font-mono text-xs font-black text-primary">02 //</span>
+          <h1
+            class="font-mono text-sm font-extrabold tracking-wider text-foreground uppercase"
+          >
+            Blog
+          </h1>
+        </div>
+        <div
+          class="flex items-center gap-1.5 font-mono text-[10px] text-muted-foreground"
+        >
+          <span
+            class="rounded-xs border border-border bg-muted/50 px-1.5 py-0.5 font-bold text-foreground"
+          >
+            {posts.length}
+          </span>
+          <span>POSTS</span>
+        </div>
+      </div>
+
+      {
+        posts.length === 0 ? (
+          <div class="flex h-40 shrink-0 items-center justify-center rounded-xs border border-dashed border-border text-center">
+            <p class="font-mono text-xs text-muted-foreground">
+              NO POSTS FOUND
+            </p>
+          </div>
+        ) : (
+          <div class="mx-auto flex w-full max-w-4xl flex-col gap-2">
+            {posts.map((post) => (
+              <a
+                href={`/blog/${post.id}`}
+                class="group relative flex flex-col overflow-hidden rounded-lg border border-border bg-card p-4 transition-all hover:border-primary/40"
+              >
+                <div class="flex items-start justify-between gap-3">
+                  <div class="min-w-0 flex-1">
+                    <h2 class="line-clamp-1 text-sm font-bold tracking-tight transition-colors group-hover:text-primary">
+                      {post.data.title}
+                    </h2>
+                    <p class="mt-1 line-clamp-2 text-xs leading-normal text-muted-foreground">
+                      {post.data.description}
+                    </p>
+                  </div>
+                  <span class="flex-shrink-0 font-mono text-[9px] whitespace-nowrap text-muted-foreground">
+                    {new Date(post.data.pubDate).toLocaleDateString()}
+                  </span>
+                </div>
+                {post.data.tags && post.data.tags.length > 0 && (
+                  <div class="mt-3 flex flex-wrap gap-1">
+                    {post.data.tags.map((tag) => (
+                      <span class="inline-flex items-center rounded border border-border/60 bg-secondary px-1.5 py-0.5 font-mono text-[8px] font-medium text-secondary-foreground">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </a>
+            ))}
+          </div>
+        )
+      }
+    </div>
+  </section>
+</MainLayout>

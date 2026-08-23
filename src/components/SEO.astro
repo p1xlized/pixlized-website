@@ -1,0 +1,55 @@
+---
+interface Props {
+  title?: string;
+  description?: string;
+  ogTitle?: string;
+  ogDescription?: string;
+  ogImage?: string;
+  canonical?: string;
+  noindex?: boolean;
+}
+
+const {
+  title,
+  description,
+  ogTitle,
+  ogDescription,
+  ogImage,
+  canonical,
+  noindex = false
+} = Astro.props
+
+const baseUrl = "https://pixlized.net"
+const finalTitle = ogTitle || title || "@pixlized - Software Developer & Creative Engineer"
+const finalDescription = ogDescription || description || "Portfolio of @pixlized - Software Developer & Creative Engineer specializing in web development, game engines, and AI solutions."
+const finalOgImage = ogImage || "https://pixlized.net/avatar.webp"
+const finalCanonical = canonical || baseUrl
+const robotsContent = noindex ? "noindex, nofollow" : "index, follow"
+---
+
+<!-- Primary Meta Tags -->
+<title>{finalTitle}</title>
+<meta name="title" content={finalTitle} />
+<meta name="description" content={finalDescription} />
+
+<!-- Open Graph / Social Media -->
+<meta property="og:type" content="website" />
+<meta property="og:url" content={finalCanonical} />
+<meta property="og:title" content={finalTitle} />
+<meta property="og:description" content={finalDescription} />
+<meta property="og:image" content={finalOgImage} />
+<meta property="og:site_name" content="@pixlized" />
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content={finalTitle} />
+<meta name="twitter:description" content={finalDescription} />
+<meta name="twitter:image" content={finalOgImage} />
+<meta name="twitter:creator" content="@pixlized" />
+<meta name="twitter:site" content="@pixlized" />
+
+<!-- Canonical URL -->
+<link rel="canonical" href={finalCanonical} />
+
+<!-- Robots -->
+<meta name="robots" content={robotsContent} />

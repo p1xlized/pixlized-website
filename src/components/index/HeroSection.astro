@@ -1,0 +1,470 @@
+---
+// HeroSection.astro - First section with profile, latest blog posts, YT video, action buttons, and dialogs
+import { getCollection } from "astro:content"
+import { memoizedQuery } from "@/utils/memoize"
+import SocialLinksGrid from "./SocialLinksGrid"
+
+// Memoized query for latest 3 blog posts from content collection
+const getRecentBlogPosts = async () => {
+  try {
+    const posts = (await getCollection("blog")).sort(
+      (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
+    )
+    return posts.slice(0, 3).map((post) => ({
+      title: post.data.title,
+      date: new Date(post.data.pubDate).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      }),
+      link: `/blog/${post.id}`,
+    }))
+  } catch (error) {
+    // Fallback if content collection fails
+    return []
+  }
+}
+
+// Memoize the query - will only run once per deployment
+const recentBlogPosts = await memoizedQuery(
+  "hero_recent_blog_posts",
+  getRecentBlogPosts
+)
+
+// Fallback blog posts if content collection is empty
+const fallbackBlogPosts = [
+  {
+    title: "Building an Ultra-Fast Portfolio with Astro",
+    date: "July 15, 2026",
+    link: "/blog/astro-portfolio",
+  },
+  {
+    title: "The Subtle Art of Dark Mode Empathy",
+    date: "June 28, 2026",
+    link: "/blog/dark-mode-empathy",
+  },
+  {
+    title: "Designing Snapping Full-Height Layouts",
+    date: "May 14, 2026",
+    link: "/blog/snapping-layouts",
+  },
+]
+
+const posts = recentBlogPosts.length > 0 ? recentBlogPosts : fallbackBlogPosts
+
+// Social links for LinkTree dialog
+const socialLinks = [
+  { name: "GitHub", url: "https://github.com/pixlized" },
+  { name: "LinkedIn", url: "https://linkedin.com/in/pixlized" },
+  { name: "BlueSky", url: "https://bsky.app/pixlized" },
+  { name: "Email", url: "mailto:contact@pixlized.dev" },
+  { name: "YouTube", url: "https://youtube.com/@pixlized" },
+  { name: "Discord", url: "https://discord.gg/pixlized" },
+]
+---
+
+<section
+  data-label="Overview"
+  id="overview"
+  class="flex h-full w-full shrink-0 snap-start flex-col items-center justify-between py-6"
+>
+  <div></div>
+
+  <div class="flex w-full max-w-4xl flex-col items-center space-y-8 px-4">
+    <!-- Profile Header - Redesigned with Lucide style -->
+    <div class="flex w-full flex-col items-center gap-4 pb-6">
+      <!-- Hero Image with Lucide Sparkles badge -->
+      <div class="group relative">
+        <div
+          class="absolute inset-0 rounded-xl bg-gradient-to-br from-primary/10 via-transparent to-transparent opacity-60 blur-2xl"
+        >
+        </div>
+        <img
+          src="/avatar.webp"
+          alt="@pixlized profile image"
+          class="relative h-28 w-28 shrink-0 rounded-xl border-2 border-primary/30 bg-muted object-cover shadow-2xl shadow-primary/10 transition-all duration-300 group-hover:scale-105 group-hover:border-primary/50 group-hover:shadow-primary/20 sm:h-32 sm:w-32"
+        />
+        <!-- Lucide Sparkles icon as badge -->
+        <div
+          class="absolute -right-2 -bottom-2 flex h-7 w-7 items-center justify-center rounded-full border-2 border-background bg-primary/20 backdrop-blur-sm"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            class="h-4 w-4 text-primary"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path
+              d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z"
+            ></path>
+            <path d="M20 2v4"></path>
+            <path d="M22 4h-4"></path>
+            <circle cx="4" cy="20" r="2"></circle>
+          </svg>
+        </div>
+        <!-- Decorative particles -->
+        <div
+          class="absolute -top-4 -left-4 h-3 w-3 rounded-full bg-primary/20 blur-xl"
+        >
+        </div>
+        <div
+          class="absolute -right-6 -bottom-6 h-4 w-4 rounded-full bg-primary/15 blur-xl"
+        >
+        </div>
+      </div>
+
+      <div class="space-y-2 text-center">
+        <h1 class="text-3xl font-black tracking-tight sm:text-4xl md:text-5xl">
+          Hey, I'm <span class="text-primary">@pixlized</span>
+        </h1>
+        <p class="font-mono text-xs text-muted-foreground sm:text-sm">
+          Software Developer & Creative Engineer
+        </p>
+      </div>
+
+      <!-- Action Buttons with Lucide icons -->
+      <div class="flex w-full justify-center gap-4 pt-4">
+        <!-- LinkTree Dialog Trigger - Lucide Link2 icon -->
+        <button
+          id="links-dialog-trigger"
+          class="inline-flex items-center justify-center gap-2 rounded-lg border border-border bg-secondary/30 px-4 py-2.5 font-mono text-xs font-bold tracking-wide text-foreground uppercase transition-colors hover:bg-secondary/60 hover:text-primary"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            class="h-4 w-4"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M9 17H7A5 5 0 0 1 7 7h2"></path>
+            <path d="M15 7h2a5 5 0 1 1 0 10h-2"></path>
+            <line x1="9" y1="12" x2="15" y2="12"></line>
+          </svg>
+          <span>Links</span>
+        </button>
+
+        <!-- More Dialog Trigger - Lucide More icon -->
+        <button
+          id="more-dialog-trigger"
+          class="inline-flex items-center justify-center gap-2 rounded-lg border border-border bg-secondary/30 px-4 py-2.5 font-mono text-xs font-bold tracking-wide text-foreground uppercase transition-colors hover:bg-secondary/60 hover:text-primary"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            class="h-4 w-4"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <circle cx="12" cy="12" r="1"></circle>
+            <circle cx="12" cy="5" r="1"></circle>
+            <circle cx="12" cy="19" r="1"></circle>
+          </svg>
+          <span>More</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Latest Blog Posts, YT Video, and Action Buttons -->
+  <div
+    class="grid w-full items-stretch gap-6 pt-2 text-left md:grid-cols-[1.2fr_0.8fr]"
+  >
+    <!-- Latest Video -->
+    <div class="flex min-h-[380px] flex-col justify-between">
+      <h2
+        class="mb-3 border-b border-border pb-1 text-center font-mono text-[10px] font-bold tracking-widest text-muted-foreground/70 uppercase md:text-left"
+      >
+        Latest Video
+      </h2>
+      <div
+        class="group relative flex w-full flex-1 items-center justify-center overflow-hidden rounded-lg border border-border bg-muted shadow-sm"
+      >
+        <div
+          class="absolute inset-0 z-10 flex items-center justify-center bg-zinc-900/10 transition-colors group-hover:bg-black/40 dark:bg-black/20"
+        >
+          <div
+            class="flex h-16 w-16 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-md transition-transform group-hover:scale-110"
+          >
+            <!-- Lucide Play Circle icon -->
+            <svg
+              viewBox="0 0 24 24"
+              class="h-7 w-7"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle cx="12" cy="12" r="10"></circle>
+              <polygon points="10 8 16 12 10 16 10 8"></polygon>
+            </svg>
+          </div>
+        </div>
+        <img
+          src="https://picsum.photos/seed/youtube/800/450"
+          alt="Latest Video"
+          class="h-full w-full object-cover brightness-95 filter transition-transform duration-500"
+        />
+        <a
+          href="https://youtube.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="absolute inset-0 z-20"
+          aria-label="Watch video"></a>
+      </div>
+    </div>
+
+    <!-- Right Side: Latest Blog Posts + Bigger Buttons -->
+    <div class="flex min-h-[380px] flex-col justify-between space-y-3">
+      <!-- Latest Blog Posts -->
+      <div class="flex flex-1 flex-col">
+        <h2
+          class="mb-2 border-b border-border pb-1 text-center font-mono text-[10px] font-bold tracking-widest text-muted-foreground/70 uppercase md:text-left"
+        >
+          Latest Blog Posts
+        </h2>
+        <div
+          class="mb-2 flex flex-1 flex-col divide-y divide-border/60 overflow-y-auto"
+        >
+          {
+            posts.slice(0, 3).map((post) => (
+              <a
+                href={post.link}
+                class="group flex flex-col justify-center py-3 first:pt-0"
+              >
+                <span class="mb-1 line-clamp-2 text-sm leading-snug font-semibold tracking-tight transition-colors group-hover:text-primary">
+                  {post.title}
+                </span>
+                <time class="font-mono text-[10px] text-muted-foreground/60">
+                  {post.date}
+                </time>
+              </a>
+            ))
+          }
+        </div>
+      </div>
+
+      <!-- Bigger Buttons Row with Lucide icons -->
+      <div class="grid grid-cols-3 gap-2 border-t border-border/40 pt-3">
+        <a
+          href="/music"
+          class="group flex flex-col items-center justify-center rounded-lg bg-secondary/30 px-3 py-5 text-foreground transition-colors duration-200 hover:bg-secondary/60 hover:text-primary"
+        >
+          <!-- Lucide Music icon -->
+          <svg
+            viewBox="0 0 24 24"
+            class="mb-1.5 h-6 w-6 transition-transform group-hover:scale-110"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M9 18V5l12-2v13"></path>
+            <circle cx="6" cy="18" r="3"></circle>
+            <circle cx="18" cy="18" r="3"></circle>
+          </svg>
+          <span class="font-mono text-[10px] font-bold tracking-wide uppercase"
+            >Music</span
+          >
+        </a>
+        <a
+          href="/projects"
+          class="group flex flex-col items-center justify-center rounded-lg bg-secondary/30 px-3 py-5 text-foreground transition-colors duration-200 hover:bg-secondary/60 hover:text-primary"
+        >
+          <!-- Lucide LayoutGrid icon -->
+          <svg
+            viewBox="0 0 24 24"
+            class="mb-1.5 h-6 w-6 transition-transform group-hover:scale-110"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <rect x="3" y="3" width="7" height="7"></rect>
+            <rect x="14" y="3" width="7" height="7"></rect>
+            <rect x="14" y="14" width="7" height="7"></rect>
+            <rect x="3" y="14" width="7" height="7"></rect>
+          </svg>
+          <span class="font-mono text-[10px] font-bold tracking-wide uppercase"
+            >Projects</span
+          >
+        </a>
+        <a
+          href="/blog"
+          class="group flex flex-col items-center justify-center rounded-lg bg-secondary/30 px-3 py-5 text-foreground transition-colors duration-200 hover:bg-secondary/60 hover:text-primary"
+        >
+          <!-- Lucide FileText icon -->
+          <svg
+            viewBox="0 0 24 24"
+            class="mb-1.5 h-6 w-6 transition-transform group-hover:scale-110"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path
+              d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"
+            ></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+          </svg>
+          <span class="font-mono text-[10px] font-bold tracking-wider uppercase"
+            >Blog</span
+          >
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- LinkTree Dialog -->
+  <div
+    id="links-dialog"
+    class="fixed inset-0 z-50 flex hidden items-center justify-center bg-black/10 backdrop-blur-sm"
+    onclick="document.getElementById('links-dialog').classList.add('hidden')"
+  >
+    <div
+      class="w-full max-w-md rounded-xl border border-border bg-popover p-4 text-sm text-popover-foreground shadow-2xl ring-1 ring-foreground/10 outline-none sm:max-w-sm"
+      onclick="event.stopPropagation()"
+    >
+      <div class="flex flex-col gap-2 text-center">
+        <h3 class="text-base leading-none font-medium">Connect With Me</h3>
+        <p class="text-sm text-muted-foreground">
+          All my social links in one place
+        </p>
+      </div>
+      <SocialLinksGrid client:load links={socialLinks} />
+      <button
+        onclick="document.getElementById('links-dialog').classList.add('hidden')"
+        class="absolute top-2 right-2 flex h-6 w-6 items-center justify-center rounded-full bg-secondary/30 text-foreground transition-colors hover:bg-secondary/60"
+        aria-label="Close"
+      >
+        <!-- Lucide X icon -->
+        <svg
+          viewBox="0 0 24 24"
+          class="h-4 w-4"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- More Dialog -->
+  <div
+    id="more-dialog"
+    class="fixed inset-0 z-50 flex hidden items-center justify-center bg-black/10 backdrop-blur-sm"
+    onclick="document.getElementById('more-dialog').classList.add('hidden')"
+  >
+    <div
+      class="w-full max-w-md rounded-xl border border-border bg-popover p-4 text-sm text-popover-foreground shadow-2xl ring-1 ring-foreground/10 outline-none sm:max-w-sm"
+      onclick="event.stopPropagation()"
+    >
+      <div class="flex flex-col items-center justify-center gap-4 py-8">
+        <!-- Animated decorative element -->
+        <div class="relative">
+          <div class="absolute inset-0 flex items-center justify-center">
+            <div
+              class="animate-spin-slow h-24 w-24 rounded-full border-4 border-primary/20 border-t-primary"
+            >
+            </div>
+          </div>
+          <div class="relative flex h-16 w-16 items-center justify-center">
+            <svg
+              viewBox="0 0 24 24"
+              class="h-10 w-10 text-primary/60"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path
+                d="M12 3v2.25m0 13.5V21m8.966-8.966h-2.25m-13.5 0h-2.25m15.364-6.364l-1.591 1.591M6.343 17.657l-1.591 1.591m15.364 0l-1.591-1.591M6.343 6.343L4.752 4.752M12 7.5a4.5 4.5 0 100 9 4.5 4.5 0 000-9z"
+              ></path>
+            </svg>
+          </div>
+        </div>
+        <div class="text-center">
+          <h3 class="text-base leading-none font-medium">Coming Soon</h3>
+          <p class="mt-1 text-sm text-muted-foreground">
+            More features in development
+          </p>
+        </div>
+      </div>
+      <button
+        onclick="document.getElementById('more-dialog').classList.add('hidden')"
+        class="absolute top-2 right-2 flex h-6 w-6 items-center justify-center rounded-full bg-secondary/30 text-foreground transition-colors hover:bg-secondary/60"
+        aria-label="Close"
+      >
+        <!-- Lucide X icon -->
+        <svg
+          viewBox="0 0 24 24"
+          class="h-4 w-4"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Scroll Anchor to Section 2 with Lucide Chevron Down -->
+  <div class="flex w-full justify-center pt-4">
+    <a
+      href="#showcase"
+      class="inline-flex flex-col items-center gap-1 font-mono text-[10px] tracking-widest text-muted-foreground/50 uppercase transition-colors duration-200 hover:text-primary"
+    >
+      <span>View Showcase</span>
+      <!-- Lucide Chevron Down icon -->
+      <svg
+        viewBox="0 0 24 24"
+        class="h-3.5 w-3.5 animate-bounce"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <polyline points="6 9 12 15 18 9"></polyline>
+      </svg>
+    </a>
+  </div>
+
+  <script>
+    // LinkTree Dialog
+    document
+      .getElementById("links-dialog-trigger")
+      ?.addEventListener("click", () => {
+        document.getElementById("links-dialog")?.classList.remove("hidden")
+      })
+
+    // More Dialog
+    document
+      .getElementById("more-dialog-trigger")
+      ?.addEventListener("click", () => {
+        document.getElementById("more-dialog")?.classList.remove("hidden")
+      })
+  </script>
+</section>

@@ -1,0 +1,131 @@
+---
+import MusicPlayer from "@/components/MusicPlayer/MusicPlayer.astro"
+import { ClientRouter } from "astro:transitions"
+import "@/styles/global.css"
+
+// Get theme from cookie to prevent flash on page load
+const themeCookie = Astro.cookies.get("theme")?.value
+const isDarkTheme = themeCookie === "dark"
+const htmlClasses = ["h-full", isDarkTheme ? "dark" : ""]
+  .filter(Boolean)
+  .join(" ")
+---
+
+<!doctype html>
+<html lang="en" class={htmlClasses}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <ClientRouter />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" href="/favicon.ico" />
+
+    <!-- SEO Metadata -->
+    <title>Music | @pixlized</title>
+    <meta name="title" content="Music | @pixlized" />
+    <meta
+      name="description"
+      content="Explore music projects and compositions by @pixlized. Interactive TUI-style MP3 player."
+    />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://pixlized.net/music" />
+    <meta property="og:title" content="Music | @pixlized" />
+    <meta
+      property="og:description"
+      content="Explore music projects and compositions by @pixlized. Interactive TUI-style MP3 player."
+    />
+    <meta property="og:image" content="https://pixlized.net/avatar.webp" />
+    <meta property="og:site_name" content="@pixlized" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Music | @pixlized" />
+    <meta
+      name="twitter:description"
+      content="Explore music projects and compositions by @pixlized. Interactive TUI-style MP3 player."
+    />
+    <meta name="twitter:image" content="https://pixlized.net/avatar.webp" />
+    <meta name="twitter:creator" content="@pixlized" />
+    <meta name="twitter:site" content="@pixlized" />
+
+    <!-- Canonical -->
+    <link rel="canonical" href="https://pixlized.net/music" />
+
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "CreativeWork",
+        "name": "Music | @pixlized",
+        "url": "https://pixlized.net/music",
+        "description": "Explore music projects and compositions by @pixlized. Interactive TUI-style MP3 player.",
+        "author": {
+          "@type": "Person",
+          "name": "@pixlized"
+        }
+      }
+    </script>
+
+    <!-- Theme & Robots -->
+    <meta name="theme-color" content="#3b82f6" />
+    <meta name="robots" content="index, follow" />
+
+    <script is:inline>
+      const getThemePreference = () => {
+        if (
+          typeof localStorage !== "undefined" &&
+          localStorage.getItem("theme")
+        ) {
+          return localStorage.getItem("theme")
+        }
+        return window.matchMedia("(prefers-color-scheme: dark)").matches
+          ? "dark"
+          : "light"
+      }
+      const isDark = getThemePreference() === "dark"
+      document.documentElement.classList[isDark ? "add" : "remove"]("dark")
+
+      if (typeof localStorage !== "undefined") {
+        const observer = new MutationObserver(() => {
+          const isDark = document.documentElement.classList.contains("dark")
+          localStorage.setItem("theme", isDark ? "dark" : "light")
+          // Also set cookie so server can read it on next page load
+          document.cookie = `theme=${isDark ? "dark" : "light"}; path=/; max-age=${60 * 60 * 24 * 365}`
+        })
+        observer.observe(document.documentElement, {
+          attributes: true,
+          attributeFilter: ["class"],
+        })
+
+        // Handle theme on Astro page transitions
+        document.addEventListener("astro:after-swap", () => {
+          const savedTheme = localStorage.getItem("theme")
+          if (savedTheme) {
+            const isDark = savedTheme === "dark"
+            document.documentElement.classList[isDark ? "add" : "remove"](
+              "dark"
+            )
+          }
+        })
+
+        document.addEventListener("astro:before-swap", () => {
+          const isDark = document.documentElement.classList.contains("dark")
+          localStorage.setItem("theme", isDark ? "dark" : "light")
+        })
+      }
+    </script>
+    <link rel="preload" href="/assets/imgs/bitwig-1.jpg" as="image" />
+    <link rel="preload" href="/assets/imgs/bitwig-2.jpg" as="image" />
+  </head>
+
+  <body
+    class="h-full w-full overflow-hidden bg-background font-mono text-foreground antialiased select-none"
+  >
+    <MusicPlayer client:load />
+  </body>
+</html>

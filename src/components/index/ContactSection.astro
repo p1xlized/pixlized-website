@@ -1,0 +1,180 @@
+---
+// ContactSection.astro - Direct contact form with Formspree integration
+import { memoizedQuery } from "@/utils/memoize"
+
+const getFormspreeEndpoint = () => import.meta.env.FORMSPREE_ENDPOINT
+
+const FORMSPREE_ENDPOINT = memoizedQuery(
+  "formspree_endpoint",
+  getFormspreeEndpoint
+)
+---
+
+<section
+  data-label="Contact"
+  id="contact"
+  class="flex h-full w-full shrink-0 snap-start flex-col items-center justify-between py-6 text-center"
+>
+  <div></div>
+  <div class="flex w-full max-w-md flex-col items-center space-y-6 px-4">
+    <div class="space-y-3 text-center">
+      <div class="flex flex-col items-center space-y-1">
+        <h2 class="text-2xl font-black tracking-tight">
+          Get In <span class="text-primary">Touch</span>
+        </h2>
+        <div class="h-0.5 w-12 bg-gradient-to-r from-primary/0 to-primary/40">
+        </div>
+      </div>
+      <p class="max-w-sm text-xs leading-relaxed text-muted-foreground">
+        Let's build something together. Reach out for collaborations, questions,
+        or just to connect.
+      </p>
+      <div
+        id="form-status"
+        class="hidden font-mono text-[10px] tracking-wider text-green-400 uppercase"
+      >
+      </div>
+    </div>
+
+    <form
+      id="contact-form"
+      action={FORMSPREE_ENDPOINT}
+      method="POST"
+      class="w-full space-y-4 rounded-xl border border-border/60 bg-card/40 p-6 text-left shadow-sm backdrop-blur-sm transition-all hover:border-primary/30 hover:shadow-md"
+    >
+      <div class="space-y-1">
+        <label
+          class="font-mono text-[10px] tracking-wider text-muted-foreground/80 uppercase"
+          >Name</label
+        >
+        <input
+          type="text"
+          name="name"
+          placeholder="Your name"
+          required
+          class="w-full rounded-lg border border-border/60 bg-secondary/30 px-4 py-3 text-xs transition-all focus:border-primary/60 focus:ring-1 focus:ring-primary/10 focus:outline-none"
+        />
+      </div>
+
+      <div class="space-y-1">
+        <label
+          class="font-mono text-[10px] tracking-wider text-muted-foreground/80 uppercase"
+          >Email</label
+        >
+        <input
+          type="email"
+          name="email"
+          placeholder="your@email.com"
+          required
+          class="w-full rounded-lg border border-border/60 bg-secondary/30 px-4 py-3 text-xs transition-all focus:border-primary/60 focus:ring-1 focus:ring-primary/10 focus:outline-none"
+        />
+      </div>
+
+      <div class="space-y-1">
+        <label
+          class="font-mono text-[10px] tracking-wider text-muted-foreground/80 uppercase"
+          >Message</label
+        >
+        <textarea
+          name="message"
+          rows="4"
+          placeholder="What's on your mind?"
+          required
+          class="w-full resize-none rounded-lg border border-border/60 bg-secondary/30 px-4 py-3 text-xs transition-all focus:border-primary/60 focus:ring-1 focus:ring-primary/10 focus:outline-none"
+        ></textarea>
+      </div>
+
+      <button
+        type="submit"
+        class="group flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-primary/10 to-primary/20 py-3 font-mono text-xs font-bold tracking-wider text-primary uppercase shadow-sm transition-all hover:bg-primary/30 hover:shadow-primary/10 active:scale-[0.98]"
+      >
+        <span>Send Message</span>
+        <svg
+          class="h-4 w-4 transition-transform group-hover:translate-x-0.5"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+        </svg>
+      </button>
+    </form>
+  </div>
+
+  <div class="flex w-full justify-center pt-4">
+    <a
+      href="#overview"
+      class="inline-flex flex-col items-center gap-1 font-mono text-[10px] tracking-widest text-muted-foreground/50 uppercase transition-colors duration-200 hover:text-primary"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke-width="2.5"
+        stroke="currentColor"
+        class="h-3.5 w-3.5"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          d="M4.5 15.75l7.5-7.5 7.5 7.5"></path>
+      </svg>
+      <span>Back To Top</span>
+    </a>
+  </div>
+</section>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const form = document.getElementById(
+      "contact-form"
+    ) as HTMLFormElement | null
+    const status = document.getElementById("form-status") as HTMLElement | null
+
+    if (form && status) {
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault()
+        const submitBtn = form.querySelector(
+          'button[type="submit"]'
+        ) as HTMLButtonElement | null
+        if (!submitBtn) return
+
+        const originalText = submitBtn.innerHTML
+        submitBtn.disabled = true
+        submitBtn.innerHTML = "<span>Sending...</span>"
+        status.classList.add("hidden")
+
+        try {
+          const response = await fetch(form.action, {
+            method: "POST",
+            body: new FormData(form),
+            headers: { Accept: "application/json" },
+          })
+
+          if (response.ok) {
+            status.textContent = "Message sent!"
+            status.classList.remove("hidden", "text-red-400")
+            status.classList.add("text-green-400")
+            form.reset()
+          } else {
+            status.textContent = "Failed. Try again."
+            status.classList.remove("hidden", "text-green-400")
+            status.classList.add("text-red-400")
+          }
+        } catch (error) {
+          status.textContent = "Network error."
+          status.classList.remove("hidden", "text-green-400")
+          status.classList.add("text-red-400")
+        } finally {
+          submitBtn.disabled = false
+          submitBtn.innerHTML = originalText
+          setTimeout(() => status.classList.add("hidden"), 5000)
+        }
+      })
+    }
+  })
+</script>

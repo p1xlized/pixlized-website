@@ -1,0 +1,106 @@
+---
+// src/pages/blog/[...slug].astro
+import MainLayout from "@/layouts/main.astro"
+import { getCollection, render, type CollectionEntry } from "astro:content"
+import { ArrowLeft, Calendar } from "lucide-react"
+
+export const prerender = true
+
+export async function getStaticPaths() {
+  const posts = await getCollection("blog")
+  return posts.map((post) => ({
+    params: { slug: post.id },
+    props: { post },
+  }))
+}
+
+interface Props {
+  post: CollectionEntry<"blog">
+}
+
+const { post } = Astro.props
+
+if (!post) {
+  return Astro.redirect("/404")
+}
+
+const { Content } = await render(post)
+
+// SEO metadata for individual blog posts
+const postUrl = `https://pixlized.net/blog/${post.id}`
+const postDescription =
+  post.data.description || "Read this blog post by @pixlized"
+---
+
+<MainLayout
+  title={post.data.title}
+  description={postDescription}
+  ogTitle={post.data.title}
+  ogDescription={postDescription}
+  ogUrl={postUrl}
+  canonical={postUrl}
+>
+  <article
+    data-label="Article"
+    class="mx-auto w-full max-w-2xl py-8 font-sans md:snap-none"
+  >
+    {/* BACK BUTTON */}
+    <a
+      href="/blog"
+      class="mb-6 inline-flex items-center gap-1.5 font-mono text-xs text-muted-foreground transition-colors hover:text-primary"
+    >
+      <ArrowLeft class="h-3.5 w-3.5" />
+      <span>Back to Blogs</span>
+    </a>
+
+    {/* ARTICLE HEADER */}
+    <header class="mb-8 border-b border-border pb-6 font-mono">
+      <div class="mb-2 flex items-center gap-2 text-xs text-muted-foreground">
+        <Calendar class="h-3.5 w-3.5 text-primary" />
+        <time datetime={post.data.pubDate.toISOString()}>
+          {
+            post.data.pubDate.toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            })
+          }
+        </time>
+      </div>
+
+      <h1
+        class="font-sans text-2xl font-bold tracking-tight text-foreground sm:text-3xl"
+      >
+        {post.data.title}
+      </h1>
+
+      {
+        post.data.description && (
+          <p class="mt-2 font-sans text-sm leading-relaxed text-muted-foreground">
+            {post.data.description}
+          </p>
+        )
+      }
+
+      {/* TAGS */}
+      {
+        post.data.tags && post.data.tags.length > 0 && (
+          <div class="mt-4 flex flex-wrap gap-2">
+            {post.data.tags.map((tag: string) => (
+              <span class="rounded-md border border-border bg-muted/40 px-2 py-0.5 text-[11px] text-muted-foreground">
+                #{tag}
+              </span>
+            ))}
+          </div>
+        )
+      }
+    </header>
+
+    {/* MARKDOWN CONTENT */}
+    <div
+      class="prose max-w-none dark:prose-invert prose-headings:font-semibold prose-headings:tracking-tight prose-a:text-primary hover:prose-a:underline"
+    >
+      <Content />
+    </div>
+  </article>
+</MainLayout>

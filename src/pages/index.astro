@@ -1,0 +1,25 @@
+---
+// index.astro - Main page with 3 scroll-anchored sections
+import MainLayout from "@/layouts/main.astro"
+import HeroSection from "@/components/index/HeroSection.astro"
+import ShowcaseSection from "@/components/index/ShowcaseSection.astro"
+import ContactSection from "@/components/index/ContactSection.astro"
+---
+
+<MainLayout
+  title="@pixlized - Software Developer & Creative Engineer"
+  description="Portfolio of @pixlized - Software Developer & Creative Engineer specializing in web development, game engines, and AI solutions."
+  ogTitle="@pixlized - Software Developer & Creative Engineer"
+  ogDescription="Portfolio of @pixlized - Software Developer & Creative Engineer specializing in web development, game engines, and AI solutions."
+  ogUrl="https://pixlized.net"
+  canonical="https://pixlized.net"
+>
+  <!-- SECTION 1: HERO WITH HEADER -->
+  <HeroSection id="overview" />
+
+  <!-- SECTION 2: SHOWCASE (BEST PROJECTS) + TOOLKIT -->
+  <ShowcaseSection id="showcase" />
+
+  <!-- SECTION 3: CONTACT ME FORM -->
+  <ContactSection id="contact" />
+</MainLayout>

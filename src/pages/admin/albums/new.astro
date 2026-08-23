@@ -1,0 +1,230 @@
+---
+import MainLayout from "@/layouts/main.astro"
+---
+
+<MainLayout>
+  <section class="flex h-full w-full flex-col items-center justify-start py-12 px-4">
+    <div class="w-full max-w-2xl space-y-6">
+      <!-- Header -->
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-2xl font-bold tracking-tight">
+            <span class="font-mono text-[hsl(var(--chart-2))]">+</span> Create New Album
+          </h1>
+          <p class="mt-1 text-sm text-muted-foreground">
+            Create a new album to organize your music
+          </p>
+        </div>
+        <div class="flex gap-2">
+          <a
+            href="/admin/dashboard"
+            class="rounded-sm border border-border bg-secondary/50 px-3 py-1.5 font-mono text-xs font-bold tracking-wider uppercase transition-colors hover:bg-secondary/80"
+          >
+            Dashboard
+          </a>
+          <a
+            href="/admin/albums"
+            class="rounded-sm border border-border bg-secondary/50 px-3 py-1.5 font-mono text-xs font-bold tracking-wider uppercase transition-colors hover:bg-secondary/80"
+          >
+            All Albums
+          </a>
+        </div>
+      </div>
+
+      <!-- Create Album Form -->
+      <form
+        id="create-album-form"
+        class="space-y-6 rounded-sm border border-border bg-card p-6 shadow-sm"
+      >
+        <div class="space-y-4">
+          <!-- Album Title -->
+          <div class="space-y-1">
+            <label class="font-mono text-[10px] tracking-wider uppercase text-muted-foreground/80">
+              Album Title <span class="text-[hsl(var(--chart-2))]">*</span>
+            </label>
+            <input
+              type="text"
+              id="album-title"
+              name="title"
+              placeholder="Enter album title..."
+              required
+              class="w-full rounded-sm border border-border bg-secondary/40 px-3 py-2.5 text-sm transition-all focus:border-[hsl(var(--chart-2))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--chart-2))]/20"
+            />
+          </div>
+
+          <!-- Description -->
+          <div class="space-y-1">
+            <label class="font-mono text-[10px] tracking-wider uppercase text-muted-foreground/80">
+              Description
+            </label>
+            <textarea
+              id="album-description"
+              name="description"
+              rows="4"
+              placeholder="Describe this album..."
+              class="w-full rounded-sm border border-border bg-secondary/40 px-3 py-2.5 text-sm transition-all focus:border-[hsl(var(--chart-2))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--chart-2))]/20 resize-none"
+            ></textarea>
+          </div>
+
+          <!-- Cover Image URL -->
+          <div class="space-y-1">
+            <label class="font-mono text-[10px] tracking-wider uppercase text-muted-foreground/80">
+              Cover Image URL
+            </label>
+            <input
+              type="text"
+              id="album-cover"
+              name="cover"
+              placeholder="e.g., /assets/music/cover.jpg"
+              class="w-full rounded-sm border border-border bg-secondary/40 px-3 py-2.5 text-sm transition-all focus:border-[hsl(var(--chart-2))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--chart-2))]/20"
+            />
+            <p class="font-mono text-[9px] text-muted-foreground/60">
+              Upload your cover image to /public/assets/music/ and reference it here
+            </p>
+          </div>
+        </div>
+
+        <div class="flex gap-2 pt-4">
+          <button
+            type="submit"
+            class="flex-1 rounded-sm bg-[hsl(var(--chart-2))] py-2.5 font-mono text-sm font-bold tracking-wider text-white uppercase shadow-sm transition-all hover:bg-[hsl(var(--chart-2))]/90"
+          >
+            Create Album
+          </button>
+          <button
+            type="reset"
+            class="rounded-sm border border-border bg-secondary/50 px-4 py-2.5 font-mono text-xs font-bold tracking-wider uppercase transition-colors hover:bg-secondary/80"
+          >
+            Reset
+          </button>
+        </div>
+      </form>
+
+      <!-- Success Message -->
+      <div
+        id="success-message"
+        class="hidden rounded-sm border border-green-500/30 bg-green-500/10 p-4 text-center"
+      >
+        <span class="text-green-400 font-mono">✓</span>
+        <span class="ml-2 font-mono text-sm">Album created successfully!</span>
+      </div>
+
+      <!-- Error Message -->
+      <div
+        id="error-message"
+        class="hidden rounded-sm border border-red-500/30 bg-red-500/10 p-4 text-center"
+      >
+        <span class="text-red-400 font-mono">✗</span>
+        <span id="error-text" class="ml-2 font-mono text-sm"></span>
+      </div>
+
+      <!-- Quick Preview -->
+      <div class="rounded-sm border border-border bg-card p-6 space-y-4">
+        <h2 class="font-mono text-sm font-bold tracking-tight uppercase">
+          Preview
+        </h2>
+        <div id="album-preview" class="rounded-sm border border-border/40 bg-secondary/30 p-6 text-center">
+          <span class="font-mono text-[10px] uppercase tracking-wider text-muted-foreground/60">
+            Album Cover Preview
+          </span>
+          <p class="font-mono text-xs text-muted-foreground/50 mt-2">
+            Cover image will appear here
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    // Check auth
+    document.addEventListener('DOMContentLoaded', () => {
+      const isLoggedIn = sessionStorage.getItem('admin_logged_in') ||
+                        localStorage.getItem('admin_token')
+      if (!isLoggedIn) {
+        const adminSeed = import.meta.env.ADMIN_SEED || "pixlized-secret-2026"
+        window.location.href = `/secret/${adminSeed}/admin`
+      }
+
+      const form = document.getElementById('create-album-form')
+      const coverInput = document.getElementById('album-cover') as HTMLInputElement
+      const preview = document.getElementById('album-preview')
+      const successMsg = document.getElementById('success-message')
+      const errorMsg = document.getElementById('error-message')
+      const errorText = document.getElementById('error-text')
+
+      // Update preview when cover URL changes
+      if (coverInput && preview) {
+        coverInput.addEventListener('input', () => {
+          const url = coverInput.value.trim()
+          if (url) {
+            preview.innerHTML = `<img src="${url}" alt="Preview" class="max-h-40 mx-auto rounded-sm object-contain" />`
+          } else {
+            preview.innerHTML = `
+              <span class="font-mono text-[10px] uppercase tracking-wider text-muted-foreground/60">
+                Album Cover Preview
+              </span>
+              <p class="font-mono text-xs text-muted-foreground/50 mt-2">
+                Cover image will appear here
+              </p>
+            `
+          }
+        })
+      }
+
+      form?.addEventListener('submit', async (e) => {
+        e.preventDefault()
+
+        const title = (document.getElementById('album-title') as HTMLInputElement)?.value || ''
+        const description = (document.getElementById('album-description') as HTMLTextAreaElement)?.value || ''
+        const cover = (document.getElementById('album-cover') as HTMLInputElement)?.value || ''
+
+        try {
+          const response = await fetch('/api/admin/albums', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
+            },
+            body: JSON.stringify({
+              title,
+              description,
+              cover
+            })
+          })
+
+          if (response.ok) {
+            form.reset()
+            if (preview) {
+              preview.innerHTML = `
+                <span class="font-mono text-[10px] uppercase tracking-wider text-muted-foreground/60">
+                  Album Cover Preview
+                </span>
+                <p class="font-mono text-xs text-muted-foreground/50 mt-2">
+                  Cover image will appear here
+                </p>
+              `
+            }
+            successMsg.classList.remove('hidden')
+            errorMsg.classList.add('hidden')
+            setTimeout(() => {
+              successMsg.classList.add('hidden')
+              // Redirect to albums list after success
+              window.location.href = '/admin/albums'
+            }, 2000)
+          } else {
+            const data = await response.json()
+            errorText.textContent = data.error || 'Failed to create album'
+            errorMsg.classList.remove('hidden')
+            successMsg.classList.add('hidden')
+            setTimeout(() => errorMsg.classList.add('hidden'), 3000)
+          }
+        } catch (err) {
+          errorText.textContent = 'Network error. Please try again.'
+          errorMsg.classList.remove('hidden')
+          successMsg.classList.add('hidden')
+          setTimeout(() => errorMsg.classList.add('hidden'), 3000)
+        }
+      })
+    })
+  </script>
+</MainLayout>
