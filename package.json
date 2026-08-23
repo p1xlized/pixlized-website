@@ -3,9 +3,7 @@
   "type": "module",
   "version": "0.0.1",
   "private": true,
-  "overrides": {
-    "vite": "^7"
-  },
+  "overrides": {},
   "engines": {
     "node": ">=22.12.0"
   },
@@ -24,22 +22,20 @@
     "tail:cloudflare": "wrangler tail --format json"
   },
   "pnpm": {
-    "overrides": {
-      "vite": "^7"
-    }
+    "overrides": {}
   },
   "dependencies": {
-    "@astrojs/node": "^11.0.2",
+    "@astrojs/node": "^10.1.4",
     "@astrojs/react": "^5",
     "@base-ui/react": "^1.6.0",
     "@fontsource-variable/geist": "^5.2.9",
     "@fontsource-variable/jetbrains-mono": "^5.2.8",
     "@fontsource/ibm-plex-mono": "^5.2.7",
-    "@tailwindcss/vite": "^4",
+    "@tailwindcss/vite": "^4.3.3",
     "@thesvg/react": "^3.3.1",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "astro": "^6",
+    "astro": "^6.4.8",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^1.24.0",
@@ -64,6 +60,7 @@
     "prettier-plugin-astro": "^0.14.1",
     "prettier-plugin-tailwindcss": "^0.8.0",
     "typescript": "~6",
-    "typescript-eslint": "^8"
+    "typescript-eslint": "^8",
+    "wrangler": "^3.114.17"
   }
 }

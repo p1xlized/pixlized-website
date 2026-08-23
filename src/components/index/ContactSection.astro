@@ -2,10 +2,12 @@
 // ContactSection.astro - Direct contact form with Formspree integration
 import { memoizedQuery } from "@/utils/memoize"
 
-const getFormspreeEndpoint = () =>
-  import.meta.env.FORMSPREE_ENDPOINT || "https://formspree.io/f/mknlyqkd"
+const getFormspreeEndpoint = () => import.meta.env.FORMSPREE_ENDPOINT
 
-const FORMSPREE_ENDPOINT = memoizedQuery("formspree_endpoint", getFormspreeEndpoint)
+const FORMSPREE_ENDPOINT = memoizedQuery(
+  "formspree_endpoint",
+  getFormspreeEndpoint
+)
 ---
 
 <section
@@ -20,15 +22,18 @@ const FORMSPREE_ENDPOINT = memoizedQuery("formspree_endpoint", getFormspreeEndpo
         <h2 class="text-2xl font-black tracking-tight">
           Get In <span class="text-primary">Touch</span>
         </h2>
-        <div class="h-0.5 w-12 bg-gradient-to-r from-primary/0 to-primary/40"></div>
+        <div class="h-0.5 w-12 bg-gradient-to-r from-primary/0 to-primary/40">
+        </div>
       </div>
       <p class="max-w-sm text-xs leading-relaxed text-muted-foreground">
-        Let's build something together. Reach out for collaborations, questions, or just to connect.
+        Let's build something together. Reach out for collaborations, questions,
+        or just to connect.
       </p>
       <div
         id="form-status"
         class="hidden font-mono text-[10px] tracking-wider text-green-400 uppercase"
-      ></div>
+      >
+      </div>
     </div>
 
     <form
@@ -38,7 +43,10 @@ const FORMSPREE_ENDPOINT = memoizedQuery("formspree_endpoint", getFormspreeEndpo
       class="w-full space-y-4 rounded-xl border border-border/60 bg-card/40 p-6 text-left shadow-sm backdrop-blur-sm transition-all hover:border-primary/30 hover:shadow-md"
     >
       <div class="space-y-1">
-        <label class="font-mono text-[10px] tracking-wider text-muted-foreground/80 uppercase">Name</label>
+        <label
+          class="font-mono text-[10px] tracking-wider text-muted-foreground/80 uppercase"
+          >Name</label
+        >
         <input
           type="text"
           name="name"
@@ -49,7 +57,10 @@ const FORMSPREE_ENDPOINT = memoizedQuery("formspree_endpoint", getFormspreeEndpo
       </div>
 
       <div class="space-y-1">
-        <label class="font-mono text-[10px] tracking-wider text-muted-foreground/80 uppercase">Email</label>
+        <label
+          class="font-mono text-[10px] tracking-wider text-muted-foreground/80 uppercase"
+          >Email</label
+        >
         <input
           type="email"
           name="email"
@@ -60,7 +71,10 @@ const FORMSPREE_ENDPOINT = memoizedQuery("formspree_endpoint", getFormspreeEndpo
       </div>
 
       <div class="space-y-1">
-        <label class="font-mono text-[10px] tracking-wider text-muted-foreground/80 uppercase">Message</label>
+        <label
+          class="font-mono text-[10px] tracking-wider text-muted-foreground/80 uppercase"
+          >Message</label
+        >
         <textarea
           name="message"
           rows="4"
@@ -85,8 +99,7 @@ const FORMSPREE_ENDPOINT = memoizedQuery("formspree_endpoint", getFormspreeEndpo
             stroke-linecap="round"
             stroke-linejoin="round"
             stroke-width="2"
-            d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
-          />
+            d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
         </svg>
       </button>
     </form>
@@ -108,8 +121,7 @@ const FORMSPREE_ENDPOINT = memoizedQuery("formspree_endpoint", getFormspreeEndpo
         <path
           stroke-linecap="round"
           stroke-linejoin="round"
-          d="M4.5 15.75l7.5-7.5 7.5 7.5"
-        />
+          d="M4.5 15.75l7.5-7.5 7.5 7.5"></path>
       </svg>
       <span>Back To Top</span>
     </a>
@@ -118,47 +130,51 @@ const FORMSPREE_ENDPOINT = memoizedQuery("formspree_endpoint", getFormspreeEndpo
 
 <script>
   document.addEventListener("DOMContentLoaded", () => {
-    const form = document.getElementById("contact-form") as HTMLFormElement | null;
-    const status = document.getElementById("form-status") as HTMLElement | null;
+    const form = document.getElementById(
+      "contact-form"
+    ) as HTMLFormElement | null
+    const status = document.getElementById("form-status") as HTMLElement | null
 
     if (form && status) {
       form.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        const submitBtn = form.querySelector('button[type="submit"]') as HTMLButtonElement | null;
-        if (!submitBtn) return;
+        e.preventDefault()
+        const submitBtn = form.querySelector(
+          'button[type="submit"]'
+        ) as HTMLButtonElement | null
+        if (!submitBtn) return
 
-        const originalText = submitBtn.innerHTML;
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = "<span>Sending...</span>";
-        status.classList.add("hidden");
+        const originalText = submitBtn.innerHTML
+        submitBtn.disabled = true
+        submitBtn.innerHTML = "<span>Sending...</span>"
+        status.classList.add("hidden")
 
         try {
           const response = await fetch(form.action, {
             method: "POST",
             body: new FormData(form),
             headers: { Accept: "application/json" },
-          });
+          })
 
           if (response.ok) {
-            status.textContent = "Message sent!";
-            status.classList.remove("hidden", "text-red-400");
-            status.classList.add("text-green-400");
-            form.reset();
+            status.textContent = "Message sent!"
+            status.classList.remove("hidden", "text-red-400")
+            status.classList.add("text-green-400")
+            form.reset()
           } else {
-            status.textContent = "Failed. Try again.";
-            status.classList.remove("hidden", "text-green-400");
-            status.classList.add("text-red-400");
+            status.textContent = "Failed. Try again."
+            status.classList.remove("hidden", "text-green-400")
+            status.classList.add("text-red-400")
           }
         } catch (error) {
-          status.textContent = "Network error.";
-          status.classList.remove("hidden", "text-green-400");
-          status.classList.add("text-red-400");
+          status.textContent = "Network error."
+          status.classList.remove("hidden", "text-green-400")
+          status.classList.add("text-red-400")
         } finally {
-          submitBtn.disabled = false;
-          submitBtn.innerHTML = originalText;
-          setTimeout(() => status.classList.add("hidden"), 5000);
+          submitBtn.disabled = false
+          submitBtn.innerHTML = originalText
+          setTimeout(() => status.classList.add("hidden"), 5000)
         }
-      });
+      })
     }
-  });
+  })
 </script>

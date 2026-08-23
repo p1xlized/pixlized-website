@@ -1,12 +1,16 @@
 import { DatabaseSync } from "node:sqlite"
 
-// Check if we're running in Cloudflare environment
-const isCloudflare = process.env.CF_D1_DB !== undefined
+// Database instance
+// In Cloudflare, CF_D1_DB will be injected as a global variable
+// In development, we use local SQLite
+declare global {
+  var CF_D1_DB: any
+}
 
-// Use Cloudflare D1 in production, local SQLite in development
-export const db = isCloudflare
-  ? (globalThis as any).CF_D1_DB
-  : new DatabaseSync("local.db")
+const dbInstance =
+  typeof CF_D1_DB !== "undefined" ? CF_D1_DB : new DatabaseSync("local.db")
+
+export const db = dbInstance
 
 // ==========================================
 // 1. TYPES & INTERFACES

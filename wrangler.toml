@@ -1,14 +1,13 @@
 # Cloudflare Wrangler configuration for Pixlized Website
-# Run: pnpm add @astrojs/cloudflare && pnpm add wrangler -D
+# For Node.js adapter on Cloudflare Pages
+# Run: npm install wrangler -D
 
 name = "pixlized-website"
-main = "./dist/server/entry.mjs"
 compatibility_date = "2024-01-01"
 
 # Production configuration
 [env.production]
 name = "pixlized-website"
-routes = ["https://pixlized.net/*", "https://www.pixlized.net/*"]
 
 # Development configuration
 [env.development]
@@ -21,37 +20,12 @@ name = "pixlized-website-dev"
 # FORMSPREE_ENDPOINT = "your-formspree-endpoint"
 
 # D1 Database for production
+# This will be available as globalThis.CF_D1_DB in your code
 [[d1_databases]]
 binding = "CF_D1_DB"
 database_name = "pixlized-db"
-database_id = "YOUR_D1_DATABASE_ID"
+database_id = "ca758b75-74e3-4f20-b799-f8d6ecf62a57"
 
-# KV Namespace for persistent storage (optional)
-# [[kv_namespaces]]
-# binding = "KV"
-# id = "your-kv-namespace-id"
-
-# R2 Bucket for assets (optional)
-# [[r2_buckets]]
-# binding = "ASSETS"
-# bucket_name = "pixlized-assets"
-
-# Cache configuration
-[cache]
-# Cache static assets aggressively
-[cache.assets]
-pattern = "/(assets|images|fonts|_astro)/.*"
-cache_control = "public, max-age=31536000, immutable"
-
-# Cache API responses for 1 hour
-[cache.api]
-pattern = "/api/.*"
-cache_control = "public, max-age=3600"
-
-# Don't cache HTML pages (they might have dynamic content)
-[cache.html]
-pattern = "\\.html$"
-cache_control = "no-cache"
 
 # Site configuration
 [site]
